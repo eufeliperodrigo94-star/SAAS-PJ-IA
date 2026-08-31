@@ -50,9 +50,18 @@ uma com um `condicao.check` implementado em `app/rules/checks.py` — ver `RULES
 `POST /processes/{id}/validate` substitui as `validations` do processo a cada execução e
 atualiza `processes.status` (`pendente_correcao` / `pronto_para_protocolo` / `em_validacao`).
 
-Tabelas adicionais previstas no escopo completo (conhecimento/RAG, uso de IA, integrações,
-notificações) entram nos dias 5–6, conforme `TODO.md`, para manter cada migration pequena e
-revisável.
+## Dia 5 — IA e documentos (`0004_ai_documents.sql`)
+
+| Tabela | Descrição |
+|---|---|
+| `ai_usage` | Uma linha por chamada de IA: organização, processo, usuário, tarefa, provider, modelo, tokens de entrada/saída, latência, sucesso/erro. |
+
+`documents` ganhou `extracted_data jsonb` e `extracted_at`. Criado o bucket privado `documents`
+no Supabase Storage (caminho `"{organization_id}/{process_id}/{arquivo}"`), com policies de
+`storage.objects` que reusam `is_org_member()` sobre o primeiro segmento do caminho.
+
+Tabelas adicionais previstas no escopo completo (conhecimento/RAG, integrações, notificações)
+entram no Dia 6, conforme `TODO.md`, para manter cada migration pequena e revisável.
 
 ## RLS
 

@@ -10,8 +10,8 @@
     <nav>
       <a href="dashboard.html">Dashboard</a>
       <a href="companies.html" class="active">Empresas</a>
-      <a href="#" title="Disponível no Dia 5">Documentos</a>
-      <a href="#" title="Disponível no Dia 5">Assistente IA</a>
+      <a href="#documents-body">Documentos</a>
+      <a href="#assistant-form">Assistente IA</a>
       <a href="#" title="Disponível no Dia 6">Assinatura</a>
     </nav>
   </aside>
@@ -38,6 +38,52 @@
       <div id="validations-list">
         <p class="notice">Nenhuma pré-validação executada ainda.</p>
       </div>
+    </div>
+
+    <div class="panel">
+      <h2>Documentos</h2>
+      <form id="upload-form" class="form-grid" style="margin-bottom: 20px">
+        <div><label>Arquivo</label><input id="upload-file" type="file" required /></div>
+        <div><button class="secondary" type="submit">Enviar documento</button></div>
+      </form>
+      <p class="error-message" id="upload-error"></p>
+      <table>
+        <thead><tr><th>Arquivo</th><th>Enviado em</th><th>Extração</th></tr></thead>
+        <tbody id="documents-body"><tr><td colspan="3">Carregando…</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <h2>Extrair e cruzar dados de um documento</h2>
+      <p class="notice" style="margin-bottom: 16px">
+        Cole o texto do documento (ex.: contrato social) para a IA extrair os dados e compará-los
+        com o cadastro da empresa. A IA nunca decide sozinha: o resultado é uma sugestão para
+        revisão — quem confirma é você.
+      </p>
+      <form id="extract-form">
+        <label for="extract-document">Documento</label>
+        <select id="extract-document"></select>
+        <label for="extract-text">Texto do documento</label>
+        <textarea id="extract-text" rows="6" style="width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface-alt); color: var(--text); font: inherit"></textarea>
+        <button class="primary" type="submit" style="width: auto; margin-top: 12px">Extrair e cruzar dados</button>
+      </form>
+      <p class="error-message" id="extract-error"></p>
+      <div id="extract-result"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Assistente IA</h2>
+      <p class="notice" style="margin-bottom: 16px">
+        Descreva em linguagem natural o que deseja fazer neste processo. A IA transforma isso em
+        uma proposta estruturada — nada é alterado automaticamente, você confirma manualmente nos
+        cadastros de sócios/endereço/CNAE.
+      </p>
+      <form id="assistant-form">
+        <textarea id="assistant-message" rows="3" style="width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface-alt); color: var(--text); font: inherit" placeholder="Ex.: Quero retirar João e colocar Maria com 30%."></textarea>
+        <button class="primary" type="submit" style="width: auto; margin-top: 12px">Interpretar solicitação</button>
+      </form>
+      <p class="error-message" id="assistant-error"></p>
+      <div id="assistant-result"></div>
     </div>
   </main>
 </div>
@@ -103,6 +149,107 @@
     renderValidations(validations);
   }
 
+  function formatDateTime2(iso) {
+    return iso ? new Date(iso).toLocaleString("pt-BR") : "—";
+  }
+
+  async function loadDocuments() {
+    const documents = await apiFetch(`/processes/${processId}/documents`);
+    const body = document.getElementById("documents-body");
+    body.innerHTML = documents.length
+      ? documents
+          .map(
+            (d) => `<tr><td>${escapeHtml(d.file_name)}</td><td>${formatDateTime2(d.created_at)}</td><td>${d.extracted_at ? "Analisado" : "Pendente"}</td></tr>`
+          )
+          .join("")
+      : '<tr><td colspan="3">Nenhum documento enviado.</td></tr>';
+
+    const select = document.getElementById("extract-document");
+    select.innerHTML = documents.length
+      ? documents.map((d) => `<option value="${d.id}">${escapeHtml(d.file_name)}</option>`).join("")
+      : '<option value="">Envie um documento primeiro</option>';
+  }
+
+  document.getElementById("upload-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const errorEl = document.getElementById("upload-error");
+    errorEl.textContent = "";
+    const fileInput = document.getElementById("upload-file");
+    const file = fileInput.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("process_id", processId);
+    formData.append("file", file);
+
+    try {
+      await apiFetch("/documents/upload", { method: "POST", body: formData });
+      event.target.reset();
+      await loadDocuments();
+    } catch (err) {
+      errorEl.textContent = err.message || "Não foi possível enviar o documento.";
+    }
+  });
+
+  document.getElementById("extract-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const errorEl = document.getElementById("extract-error");
+    const resultEl = document.getElementById("extract-result");
+    errorEl.textContent = "";
+    resultEl.innerHTML = "";
+
+    const documentId = document.getElementById("extract-document").value;
+    const text = document.getElementById("extract-text").value.trim();
+    if (!documentId || !text) {
+      errorEl.textContent = "Selecione um documento e cole o texto para analisar.";
+      return;
+    }
+
+    try {
+      const result = await apiFetch(`/documents/${documentId}/extract`, {
+        method: "POST",
+        body: JSON.stringify({ text }),
+      });
+      const rows = result.divergences.length
+        ? result.divergences
+            .map(
+              (d) => `<div class="notice" style="margin-bottom: 8px; ${d.divergente ? "border-color: var(--erro)" : ""}">
+                <strong>${escapeHtml(d.campo)}</strong> — cadastro: ${escapeHtml(d.cadastro)} · documento: ${escapeHtml(d.documento)}
+                ${d.divergente ? ' <span class="badge result-erro">Divergente</span>' : ' <span class="badge result-ok">OK</span>'}
+              </div>`
+            )
+            .join("")
+        : '<p class="notice">Nenhum campo comparável foi extraído do texto.</p>';
+      resultEl.innerHTML = rows;
+      await loadDocuments();
+    } catch (err) {
+      errorEl.textContent = err.message || "Não foi possível extrair os dados do documento.";
+    }
+  });
+
+  document.getElementById("assistant-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const errorEl = document.getElementById("assistant-error");
+    const resultEl = document.getElementById("assistant-result");
+    errorEl.textContent = "";
+    resultEl.innerHTML = "";
+
+    const message = document.getElementById("assistant-message").value.trim();
+    if (!message) return;
+
+    try {
+      const result = await apiFetch("/assistant/message", {
+        method: "POST",
+        body: JSON.stringify({ process_id: processId, message }),
+      });
+      resultEl.innerHTML = `
+        <p class="notice">Proposta gerada pela IA — confirme e aplique manualmente nos cadastros:</p>
+        <pre style="background: var(--surface-alt); padding: 12px; border-radius: 8px; overflow-x: auto">${escapeHtml(JSON.stringify(result.proposal, null, 2))}</pre>`;
+    } catch (err) {
+      errorEl.textContent = err.message || "Não foi possível interpretar a solicitação.";
+    }
+  });
+
   document.getElementById("validate-button").addEventListener("click", async () => {
     const button = document.getElementById("validate-button");
     button.disabled = true;
@@ -129,6 +276,7 @@
     try {
       await loadProcess();
       await loadValidations();
+      await loadDocuments();
     } catch (err) {
       document.getElementById("process-panel").innerHTML = `<p class="error-message">${escapeHtml(err.message)}</p>`;
     }

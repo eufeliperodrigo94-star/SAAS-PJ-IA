@@ -13,8 +13,9 @@ async function getAccessToken() {
 
 async function apiFetch(path, options = {}) {
   const token = await getAccessToken();
+  const isFormData = options.body instanceof FormData;
   const headers = {
-    "Content-Type": "application/json",
+    ...(isFormData ? {} : { "Content-Type": "application/json" }),
     ...(options.headers || {}),
   };
   if (token) {

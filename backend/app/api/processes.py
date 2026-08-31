@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, Query
 
 from app.core.security import AuthenticatedUser, require_organization
+from app.schemas.document import DocumentOut
 from app.schemas.process import ProcessCreate, ProcessOut
 from app.schemas.validation import ValidationOut, ValidationRunOut
-from app.services import process_service, validation_service
+from app.services import document_service, process_service, validation_service
 
 router = APIRouter(prefix="/processes", tags=["processes"])
 
@@ -42,3 +43,10 @@ def list_validations(
     process_id: str, user: AuthenticatedUser = Depends(require_organization)
 ) -> list[dict]:
     return validation_service.list_validations(user.organization_id, process_id)
+
+
+@router.get("/{process_id}/documents", response_model=list[DocumentOut])
+def list_documents(
+    process_id: str, user: AuthenticatedUser = Depends(require_organization)
+) -> list[dict]:
+    return document_service.list_documents(user.organization_id, process_id)

@@ -6,7 +6,7 @@
 | 2 | Empresas, sócios, endereços, CNAEs e processos | ✅ concluído |
 | 3 | Memória empresarial e histórico | ✅ concluído |
 | 4 | Motor de regras e pré-validação | ✅ concluído |
-| 5 | Documentos + Claude + cruzamento | ⬜ |
+| 5 | Documentos + Claude + cruzamento | ✅ concluído |
 | 6 | Dashboard + relatório + assinatura | ⬜ |
 | 7 | Testes + segurança + deploy | ⬜ |
 
@@ -57,9 +57,24 @@
       (OK/Atenção/Erro, evidência e ação sugerida); linkado a partir de `company.html`.
 - [ ] Validar ponta a ponta com um projeto Supabase real (aplicar seed e rodar uma validação).
 
+## Dia 5 — IA e documentos
+
+- [x] Migration `0004_ai_documents.sql`: `ai_usage`, `documents.extracted_data/extracted_at`,
+      bucket privado `documents` no Storage + RLS.
+- [x] `app/ai/`: `AIProvider` (interface), `ClaudeProvider`, `AIRouter` — registra toda chamada
+      em `ai_usage`; erros do provider nunca vazam (viram `AIUnavailableError`).
+- [x] Documentos: upload no Storage (`POST /documents/upload`), extração via IA + cruzamento
+      determinístico cadastro×documento (`POST /documents/{id}/extract`,
+      `app/documents/cross_check.py`), listagem (`GET /processes/{id}/documents`).
+- [x] Assistente: `POST /assistant/message` transforma linguagem natural em proposta JSON por
+      tipo de processo — nunca aplica a alteração sozinho.
+- [x] Frontend: seções de Documentos, extração/cruzamento e Assistente IA em
+      `process-detail.html`.
+- [ ] Validar ponta a ponta com `ANTHROPIC_API_KEY` real e um projeto Supabase real (upload +
+      extração + assistente).
+
 ## Próximos dias (visão geral)
 
-- **Dia 5:** AI Router + Claude provider; upload/extração/comparação de documentos.
 - **Dia 6:** Dashboard completo, relatório de pré-validação, planos e billing.
 - **Dia 7:** Testes automatizados, revisão de segurança/RLS, Dockerfile de produção e deploy.
 
