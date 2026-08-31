@@ -20,8 +20,18 @@ multi-tenant via RLS.
 | `validations` | Resultado da execução do motor de regras sobre um processo. |
 | `audit_logs` | Log de auditoria (quem fez o quê, quando, em qual organização). |
 
-Tabelas adicionais previstas no escopo completo (sócios, endereços, CNAEs, histórico de eventos,
-conhecimento/RAG, uso de IA, integrações, notificações) entram nos dias 2–6, conforme
+## Dia 2 — detalhamento de empresas (`0002_companies_detail.sql`)
+
+| Tabela | Descrição |
+|---|---|
+| `company_partners` | Sócios da empresa (nome, CPF/CNPJ, qualificação, % capital, datas). |
+| `company_addresses` | Endereços da empresa (sede/filial), com flag `atual` para histórico. |
+| `company_activities` | CNAEs vinculados à empresa, com flag `is_primary`. |
+
+`companies` ganhou a coluna `capital_social`.
+
+Tabelas adicionais previstas no escopo completo (histórico de eventos/timeline,
+conhecimento/RAG, uso de IA, integrações, notificações) entram nos dias 3–6, conforme
 `TODO.md`, para manter cada migration pequena e revisável.
 
 ## RLS

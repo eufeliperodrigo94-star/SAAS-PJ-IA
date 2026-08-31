@@ -1,0 +1,146 @@
+<title>Empresas — SaaS Pré-Validação Empresarial</title>
+<link rel="stylesheet" href="assets/style.css" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="assets/config.js"></script>
+<script src="assets/app.js"></script>
+
+<div class="app-shell">
+  <aside class="sidebar">
+    <h2>Pré-Validação PE</h2>
+    <nav>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="companies.html" class="active">Empresas</a>
+      <a href="#" title="Disponível no Dia 5">Documentos</a>
+      <a href="#" title="Disponível no Dia 5">Assistente IA</a>
+      <a href="#" title="Disponível no Dia 6">Assinatura</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <strong>Minhas Empresas</strong>
+      <button id="logout-button" type="button">Sair</button>
+    </div>
+
+    <div class="panel">
+      <h2>Nova empresa</h2>
+      <form id="company-form">
+        <div class="form-grid">
+          <div>
+            <label for="razao-social">Razão social *</label>
+            <input id="razao-social" required />
+          </div>
+          <div>
+            <label for="nome-fantasia">Nome fantasia</label>
+            <input id="nome-fantasia" />
+          </div>
+          <div>
+            <label for="cnpj">CNPJ</label>
+            <input id="cnpj" placeholder="00.000.000/0000-00" />
+          </div>
+          <div>
+            <label for="natureza-juridica">Natureza jurídica</label>
+            <input id="natureza-juridica" placeholder="Ex.: LTDA" />
+          </div>
+          <div>
+            <label for="municipio">Município</label>
+            <input id="municipio" />
+          </div>
+          <div>
+            <label for="uf">UF</label>
+            <input id="uf" maxlength="2" value="PE" />
+          </div>
+          <div>
+            <label for="capital-social">Capital social (R$)</label>
+            <input id="capital-social" type="number" step="0.01" min="0" />
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="primary" type="submit" style="width: auto; margin-top: 0">Cadastrar</button>
+        </div>
+        <p class="error-message" id="form-error"></p>
+      </form>
+    </div>
+
+    <div class="panel">
+      <h2>Empresas cadastradas</h2>
+      <table id="companies-table">
+        <thead>
+          <tr>
+            <th>Razão social</th>
+            <th>CNPJ</th>
+            <th>Município/UF</th>
+          </tr>
+        </thead>
+        <tbody id="companies-body">
+          <tr><td colspan="3">Carregando…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<script>
+  const companiesBody = document.getElementById("companies-body");
+
+  function escapeHtml(value) {
+    const div = document.createElement("div");
+    div.textContent = value ?? "";
+    return div.innerHTML;
+  }
+
+  async function loadCompanies() {
+    try {
+      const companies = await apiFetch("/companies");
+      if (companies.length === 0) {
+        companiesBody.innerHTML = '<tr><td colspan="3">Nenhuma empresa cadastrada ainda.</td></tr>';
+        return;
+      }
+      companiesBody.innerHTML = companies
+        .map(
+          (c) => `
+        <tr class="clickable" onclick="window.location.href='company.html?id=${c.id}'">
+          <td>${escapeHtml(c.razao_social)}${c.nome_fantasia ? ` <span class="badge">${escapeHtml(c.nome_fantasia)}</span>` : ""}</td>
+          <td>${escapeHtml(c.cnpj) || "—"}</td>
+          <td>${escapeHtml(c.municipio) || "—"}${c.uf ? "/" + escapeHtml(c.uf) : ""}</td>
+        </tr>`
+        )
+        .join("");
+    } catch (err) {
+      companiesBody.innerHTML = `<tr><td colspan="3">Erro ao carregar empresas: ${escapeHtml(err.message)}</td></tr>`;
+    }
+  }
+
+  document.getElementById("company-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const errorEl = document.getElementById("form-error");
+    errorEl.textContent = "";
+
+    const capital = document.getElementById("capital-social").value;
+    const payload = {
+      razao_social: document.getElementById("razao-social").value.trim(),
+      nome_fantasia: document.getElementById("nome-fantasia").value.trim() || null,
+      cnpj: document.getElementById("cnpj").value.trim() || null,
+      natureza_juridica: document.getElementById("natureza-juridica").value.trim() || null,
+      municipio: document.getElementById("municipio").value.trim() || null,
+      uf: document.getElementById("uf").value.trim() || null,
+      capital_social: capital ? parseFloat(capital) : null,
+    };
+
+    try {
+      const company = await apiFetch("/companies", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      window.location.href = `company.html?id=${company.id}`;
+    } catch (err) {
+      errorEl.textContent = err.message || "Não foi possível cadastrar a empresa.";
+    }
+  });
+
+  (async () => {
+    await requireSession();
+    document.getElementById("logout-button").addEventListener("click", signOut);
+    await loadCompanies();
+  })();
+</script>

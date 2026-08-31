@@ -2,8 +2,8 @@
 
 | Dia | Entrega | Status |
 |---|---|---|
-| 1 | Arquitetura, Supabase, banco e autenticação | ✅ em andamento |
-| 2 | Empresas, sócios, endereços, CNAEs e processos | ⬜ |
+| 1 | Arquitetura, Supabase, banco e autenticação | ✅ concluído |
+| 2 | Empresas, sócios, endereços, CNAEs e processos | ✅ concluído |
 | 3 | Memória empresarial e histórico | ⬜ |
 | 4 | Motor de regras e pré-validação | ⬜ |
 | 5 | Documentos + Claude + cruzamento | ⬜ |
@@ -20,10 +20,20 @@
 - [x] Frontend: login, cadastro (registro de organização) e dashboard inicial (stub).
 - [ ] Aplicar migration em um projeto Supabase real e validar login ponta a ponta.
 
+## Dia 2 — Empresas
+
+- [x] Migration `0002_companies_detail.sql`: `company_partners`, `company_addresses`,
+      `company_activities` (+ RLS) e `capital_social` em `companies`.
+- [x] API: CRUD de empresas, sócios, endereços, CNAEs; criação/listagem/detalhe de processos.
+- [x] Isolamento multi-tenant reforçado no backend (serviços validam organização antes de
+      qualquer leitura/escrita) — coberto por testes unitários.
+- [x] Frontend: `companies.html` (lista + cadastro), `company.html` (detalhe completo),
+      `process.html` (novo processo).
+- [ ] Validar ponta a ponta com um projeto Supabase real (cadastro → sócios/endereços/CNAEs →
+      novo processo).
+
 ## Próximos dias (visão geral)
 
-- **Dia 2:** CRUD de empresas (sócios, endereços, CNAEs) e processos; telas Minhas
-  Empresas/Nova Empresa/Detalhe.
 - **Dia 3:** Timeline/memória por empresa reutilizada em novos processos.
 - **Dia 4:** `rules/engine.py`, validators e regras iniciais para PE; resultados OK/ATENÇÃO/ERRO.
 - **Dia 5:** AI Router + Claude provider; upload/extração/comparação de documentos.

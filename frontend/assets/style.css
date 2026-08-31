@@ -223,3 +223,108 @@ button.link {
   font-size: 0.9rem;
   color: var(--text-muted);
 }
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.panel h2 {
+  margin: 0 0 16px;
+  font-size: 1.05rem;
+}
+
+.panel h3 {
+  margin: 24px 0 12px;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px 16px;
+  align-items: end;
+}
+
+.form-grid label {
+  margin: 0 0 6px;
+}
+
+.form-actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 12px;
+}
+
+button.secondary {
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+button.secondary:hover {
+  background: var(--surface-alt);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+th, td {
+  text-align: left;
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+th {
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+tr.clickable {
+  cursor: pointer;
+}
+
+tr.clickable:hover {
+  background: var(--surface-alt);
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  background: var(--surface-alt);
+  color: var(--text-muted);
+}
+
+.badge.status-rascunho { color: var(--text-muted); }
+.badge.status-em_validacao { color: var(--atencao); }
+.badge.status-pendente_correcao { color: var(--erro); }
+.badge.status-pronto_para_protocolo,
+.badge.status-protocolado { color: var(--ok); }
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 16px;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+
+.back-link:hover {
+  color: var(--text);
+}

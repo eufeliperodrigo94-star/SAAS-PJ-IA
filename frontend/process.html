@@ -1,0 +1,95 @@
+<title>Novo Processo — SaaS Pré-Validação Empresarial</title>
+<link rel="stylesheet" href="assets/style.css" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="assets/config.js"></script>
+<script src="assets/app.js"></script>
+
+<div class="app-shell">
+  <aside class="sidebar">
+    <h2>Pré-Validação PE</h2>
+    <nav>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="companies.html" class="active">Empresas</a>
+      <a href="#" title="Disponível no Dia 5">Documentos</a>
+      <a href="#" title="Disponível no Dia 5">Assistente IA</a>
+      <a href="#" title="Disponível no Dia 6">Assinatura</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <strong>Novo processo</strong>
+      <button id="logout-button" type="button">Sair</button>
+    </div>
+
+    <a class="back-link" id="back-link" href="companies.html">← Voltar para a empresa</a>
+
+    <div class="panel">
+      <h2 id="company-label">Carregando empresa…</h2>
+      <form id="process-form">
+        <label for="process-type">Tipo de processo *</label>
+        <select id="process-type" required>
+          <option value="abertura">Abertura empresarial</option>
+          <option value="alteracao_qsa">Alteração de QSA/sócios</option>
+          <option value="alteracao_endereco">Alteração de endereço</option>
+          <option value="alteracao_cnae">Alteração de CNAE/atividade</option>
+          <option value="alteracao_capital">Alteração de capital</option>
+          <option value="alteracao_administrador">Alteração de administrador</option>
+          <option value="alteracao_nome_objeto">Alteração de nome/objeto social</option>
+        </select>
+
+        <label for="process-description">Descreva o que deseja fazer (linguagem natural)</label>
+        <input id="process-description" placeholder="Ex.: Quero retirar João e colocar Maria com 30%." />
+
+        <button class="primary" type="submit">Criar processo</button>
+        <p class="error-message" id="form-error"></p>
+      </form>
+      <p class="notice" style="margin-top: 16px">
+        A interpretação automática da descrição e a execução do motor de regras chegam nos
+        Dias 4 e 5. Por enquanto o processo é criado com status "rascunho".
+      </p>
+    </div>
+  </main>
+</div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const companyId = params.get("company_id");
+
+  document.getElementById("back-link").href = companyId ? `company.html?id=${companyId}` : "companies.html";
+
+  document.getElementById("process-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const errorEl = document.getElementById("form-error");
+    errorEl.textContent = "";
+
+    try {
+      await apiFetch("/processes", {
+        method: "POST",
+        body: JSON.stringify({
+          company_id: companyId,
+          type: document.getElementById("process-type").value,
+          description: document.getElementById("process-description").value.trim() || null,
+        }),
+      });
+      window.location.href = `company.html?id=${companyId}`;
+    } catch (err) {
+      errorEl.textContent = err.message || "Não foi possível criar o processo.";
+    }
+  });
+
+  (async () => {
+    if (!companyId) {
+      window.location.href = "companies.html";
+      return;
+    }
+    await requireSession();
+    document.getElementById("logout-button").addEventListener("click", signOut);
+    try {
+      const company = await apiFetch(`/companies/${companyId}`);
+      document.getElementById("company-label").textContent = `Empresa: ${company.razao_social}`;
+    } catch (err) {
+      document.getElementById("company-label").textContent = "Empresa não encontrada.";
+    }
+  })();
+</script>
