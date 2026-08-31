@@ -1,0 +1,93 @@
+<title>Entrar — SaaS Pré-Validação Empresarial</title>
+<link rel="stylesheet" href="assets/style.css" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="assets/config.js"></script>
+<script src="assets/app.js"></script>
+
+<div class="center-screen">
+  <div class="card">
+    <h1>Pré-Validação Empresarial</h1>
+    <p class="subtitle">Revise o processo antes de protocolar.</p>
+
+    <div class="tabs">
+      <button id="tab-login" class="active" type="button">Entrar</button>
+      <button id="tab-signup" type="button">Criar conta</button>
+    </div>
+
+    <form id="auth-form">
+      <label for="email">E-mail</label>
+      <input id="email" type="email" required autocomplete="email" />
+
+      <label for="password">Senha</label>
+      <input id="password" type="password" required autocomplete="current-password" minlength="6" />
+
+      <div id="signup-only" style="display: none">
+        <label for="organization-name">Nome do escritório</label>
+        <input id="organization-name" type="text" />
+      </div>
+
+      <button class="primary" type="submit" id="submit-button">Entrar</button>
+      <p class="error-message" id="error-message"></p>
+    </form>
+  </div>
+</div>
+
+<script>
+  const form = document.getElementById("auth-form");
+  const tabLogin = document.getElementById("tab-login");
+  const tabSignup = document.getElementById("tab-signup");
+  const signupOnly = document.getElementById("signup-only");
+  const submitButton = document.getElementById("submit-button");
+  const errorMessage = document.getElementById("error-message");
+  let mode = "login";
+
+  function setMode(next) {
+    mode = next;
+    tabLogin.classList.toggle("active", mode === "login");
+    tabSignup.classList.toggle("active", mode === "signup");
+    signupOnly.style.display = mode === "signup" ? "block" : "none";
+    submitButton.textContent = mode === "signup" ? "Criar conta" : "Entrar";
+    errorMessage.textContent = "";
+  }
+
+  tabLogin.addEventListener("click", () => setMode("login"));
+  tabSignup.addEventListener("click", () => setMode("signup"));
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    errorMessage.textContent = "";
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+
+    try {
+      if (mode === "signup") {
+        const organizationName = document.getElementById("organization-name").value.trim();
+        if (!organizationName) {
+          errorMessage.textContent = "Informe o nome do escritório.";
+          return;
+        }
+        const { error } = await supabaseClient.auth.signUp({ email, password });
+        if (error) throw error;
+
+        // Se confirmação de e-mail estiver desativada, já haverá sessão ativa.
+        const { data } = await supabaseClient.auth.getSession();
+        if (data.session) {
+          await apiFetch("/auth/register-organization", {
+            method: "POST",
+            body: JSON.stringify({ organization_name: organizationName }),
+          });
+          window.location.href = "dashboard.html";
+        } else {
+          errorMessage.textContent = "Conta criada. Confirme seu e-mail e faça login.";
+          setMode("login");
+        }
+      } else {
+        const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        window.location.href = "dashboard.html";
+      }
+    } catch (err) {
+      errorMessage.textContent = err.message || "Não foi possível concluir a solicitação.";
+    }
+  });
+</script>

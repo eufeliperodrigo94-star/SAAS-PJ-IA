@@ -1,0 +1,16 @@
+<title>SaaS Pré-Validação Empresarial</title>
+<link rel="stylesheet" href="assets/style.css" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="assets/config.js"></script>
+<script src="assets/app.js"></script>
+
+<div class="center-screen">
+  <p class="notice">Carregando…</p>
+</div>
+
+<script>
+  (async () => {
+    const { data } = await supabaseClient.auth.getSession();
+    window.location.href = data.session ? "dashboard.html" : "login.html";
+  })();
+</script>

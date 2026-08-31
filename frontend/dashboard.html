@@ -1,0 +1,89 @@
+<title>Dashboard — SaaS Pré-Validação Empresarial</title>
+<link rel="stylesheet" href="assets/style.css" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="assets/config.js"></script>
+<script src="assets/app.js"></script>
+
+<div class="app-shell">
+  <aside class="sidebar">
+    <h2>Pré-Validação PE</h2>
+    <nav>
+      <a href="dashboard.html" class="active">Dashboard</a>
+      <a href="#" title="Disponível no Dia 2">Empresas</a>
+      <a href="#" title="Disponível no Dia 2">Processos</a>
+      <a href="#" title="Disponível no Dia 5">Documentos</a>
+      <a href="#" title="Disponível no Dia 5">Assistente IA</a>
+      <a href="#" title="Disponível no Dia 6">Assinatura</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <strong id="org-name">Carregando…</strong>
+      </div>
+      <button id="logout-button" type="button">Sair</button>
+    </div>
+
+    <div id="no-org-notice" class="notice" style="display: none">
+      Você ainda não pertence a um escritório. Recarregue o cadastro em
+      <a href="login.html">login.html</a>.
+    </div>
+
+    <div class="stat-grid" id="stat-grid" style="display: none">
+      <div class="stat-card">
+        <div class="value" id="stat-companies">0</div>
+        <div class="label">Empresas</div>
+      </div>
+      <div class="stat-card">
+        <div class="value" id="stat-processes">0</div>
+        <div class="label">Processos em andamento</div>
+      </div>
+      <div class="stat-card atencao">
+        <div class="value" id="stat-alerts">0</div>
+        <div class="label">Alertas</div>
+      </div>
+      <div class="stat-card erro">
+        <div class="value" id="stat-errors">0</div>
+        <div class="label">Erros</div>
+      </div>
+      <div class="stat-card ok">
+        <div class="value" id="stat-ready">0</div>
+        <div class="label">Prontos para protocolo</div>
+      </div>
+    </div>
+
+    <p class="notice">
+      MVP em construção (Dia 1 de 7): fundação, banco e autenticação prontos. Empresas, processos,
+      motor de regras, documentos e IA chegam nos próximos dias.
+    </p>
+  </main>
+</div>
+
+<script>
+  (async () => {
+    await requireSession();
+    document.getElementById("logout-button").addEventListener("click", signOut);
+
+    try {
+      const me = await apiFetch("/auth/me");
+      if (!me.organization_id) {
+        document.getElementById("org-name").textContent = "Sem escritório";
+        document.getElementById("no-org-notice").style.display = "block";
+        return;
+      }
+
+      const summary = await apiFetch("/dashboard/summary");
+      document.getElementById("org-name").textContent = `Escritório · ${me.role}`;
+      document.getElementById("stat-companies").textContent = summary.total_companies;
+      document.getElementById("stat-processes").textContent = summary.processes_in_progress;
+      document.getElementById("stat-alerts").textContent = summary.alerts;
+      document.getElementById("stat-errors").textContent = summary.errors;
+      document.getElementById("stat-ready").textContent = summary.ready_for_filing;
+      document.getElementById("stat-grid").style.display = "grid";
+    } catch (err) {
+      document.getElementById("org-name").textContent = "Erro ao carregar dados";
+      console.error(err);
+    }
+  })();
+</script>
