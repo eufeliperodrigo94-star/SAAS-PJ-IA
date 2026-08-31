@@ -4,7 +4,7 @@
 |---|---|---|
 | 1 | Arquitetura, Supabase, banco e autenticação | ✅ concluído |
 | 2 | Empresas, sócios, endereços, CNAEs e processos | ✅ concluído |
-| 3 | Memória empresarial e histórico | ⬜ |
+| 3 | Memória empresarial e histórico | ✅ concluído |
 | 4 | Motor de regras e pré-validação | ⬜ |
 | 5 | Documentos + Claude + cruzamento | ⬜ |
 | 6 | Dashboard + relatório + assinatura | ⬜ |
@@ -32,9 +32,19 @@
 - [ ] Validar ponta a ponta com um projeto Supabase real (cadastro → sócios/endereços/CNAEs →
       novo processo).
 
+## Dia 3 — Memória empresarial
+
+- [x] Migration `0003_company_events.sql`: `company_events` (timeline) + RLS.
+- [x] Serviços de empresa/processo registram eventos automaticamente (criação/atualização de
+      empresa, sócio/endereço/CNAE adicionado, processo iniciado).
+- [x] `app/memory/company_memory.py`: agrega dados estruturados + histórico recente + contagem
+      de processos em aberto. Rotas `GET /companies/{id}/timeline` e `GET /companies/{id}/memory`.
+- [x] Frontend: painel de timeline em `company.html`; `process.html` mostra a memória reutilizável
+      (sócios, endereço atual, CNAEs, processos em aberto) antes de criar um novo processo.
+- [ ] Validar ponta a ponta com um projeto Supabase real.
+
 ## Próximos dias (visão geral)
 
-- **Dia 3:** Timeline/memória por empresa reutilizada em novos processos.
 - **Dia 4:** `rules/engine.py`, validators e regras iniciais para PE; resultados OK/ATENÇÃO/ERRO.
 - **Dia 5:** AI Router + Claude provider; upload/extração/comparação de documentos.
 - **Dia 6:** Dashboard completo, relatório de pré-validação, planos e billing.

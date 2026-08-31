@@ -28,6 +28,10 @@ def test_create_process_delegates_to_repository(monkeypatch):
         return {"id": "process-1", **data}
 
     monkeypatch.setattr("app.repositories.processes_repo.create_process", fake_create_process)
+    monkeypatch.setattr(
+        "app.repositories.company_events_repo.create_event",
+        lambda *args, **kwargs: {"id": "event-1"},
+    )
 
     result = process_service.create_process(
         "org-1", "user-1", {"company_id": "company-1", "type": "abertura", "description": None}

@@ -25,6 +25,11 @@
     <a class="back-link" id="back-link" href="companies.html">← Voltar para a empresa</a>
 
     <div class="panel">
+      <h2>Memória empresarial reutilizada</h2>
+      <div id="memory-summary" class="notice">Carregando histórico da empresa…</div>
+    </div>
+
+    <div class="panel">
       <h2 id="company-label">Carregando empresa…</h2>
       <form id="process-form">
         <label for="process-type">Tipo de processo *</label>
@@ -57,6 +62,35 @@
   const companyId = params.get("company_id");
 
   document.getElementById("back-link").href = companyId ? `company.html?id=${companyId}` : "companies.html";
+
+  function escapeHtml(value) {
+    const div = document.createElement("div");
+    div.textContent = value ?? "";
+    return div.innerHTML;
+  }
+
+  async function loadMemory() {
+    const memoryEl = document.getElementById("memory-summary");
+    try {
+      const memory = await apiFetch(`/companies/${companyId}/memory`);
+      const partnerNames = memory.partners.map((p) => escapeHtml(p.nome)).join(", ") || "nenhum sócio cadastrado";
+      const address = memory.addresses.find((a) => a.atual) || memory.addresses[0];
+      const addressText = address
+        ? `${escapeHtml(address.municipio) || "—"}${address.uf ? "/" + escapeHtml(address.uf) : ""}`
+        : "nenhum endereço cadastrado";
+      const cnaes = memory.activities.map((a) => escapeHtml(a.cnae_code)).join(", ") || "nenhum CNAE cadastrado";
+
+      memoryEl.innerHTML = `
+        Estes dados já estão na memória da empresa e não precisam ser redigitados:<br />
+        <strong>Sócios:</strong> ${partnerNames}<br />
+        <strong>Endereço atual:</strong> ${addressText}<br />
+        <strong>CNAEs:</strong> ${cnaes}<br />
+        <strong>Processos em aberto:</strong> ${memory.open_processes}
+        ${memory.open_processes > 0 ? " — verifique se este processo não duplica um já iniciado." : ""}`;
+    } catch (err) {
+      memoryEl.textContent = "Não foi possível carregar o histórico da empresa.";
+    }
+  }
 
   document.getElementById("process-form").addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -91,5 +125,6 @@
     } catch (err) {
       document.getElementById("company-label").textContent = "Empresa não encontrada.";
     }
+    await loadMemory();
   })();
 </script>

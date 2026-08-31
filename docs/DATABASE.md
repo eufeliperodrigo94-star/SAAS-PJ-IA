@@ -30,9 +30,21 @@ multi-tenant via RLS.
 
 `companies` ganhou a coluna `capital_social`.
 
-Tabelas adicionais previstas no escopo completo (histórico de eventos/timeline,
-conhecimento/RAG, uso de IA, integrações, notificações) entram nos dias 3–6, conforme
-`TODO.md`, para manter cada migration pequena e revisável.
+## Dia 3 — memória empresarial (`0003_company_events.sql`)
+
+| Tabela | Descrição |
+|---|---|
+| `company_events` | Timeline de eventos da empresa (criação, sócio/endereço/CNAE adicionado, processo iniciado etc.), com `payload jsonb` e `process_id` opcional. |
+
+Toda mutação relevante em `companies`, `company_partners`, `company_addresses`,
+`company_activities` e `processes` gera um `company_event`. O módulo `app/memory/company_memory.py`
+agrega empresa + sócios + endereços + CNAEs + eventos recentes num único instantâneo
+(`GET /companies/{id}/memory`), reutilizado ao iniciar novos processos — sem depender da LLM
+para "lembrar" nada (ver `AI.md`).
+
+Tabelas adicionais previstas no escopo completo (conhecimento/RAG, uso de IA, integrações,
+notificações) entram nos dias 4–6, conforme `TODO.md`, para manter cada migration pequena e
+revisável.
 
 ## RLS
 

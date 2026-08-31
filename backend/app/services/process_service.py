@@ -1,5 +1,5 @@
 from app.core.exceptions import DomainError
-from app.repositories import processes_repo
+from app.repositories import company_events_repo, processes_repo
 from app.services.company_service import get_company_or_404
 
 
@@ -22,4 +22,14 @@ def get_process_or_404(organization_id: str, process_id: str) -> dict:
 def create_process(organization_id: str, created_by: str, data: dict) -> dict:
     # Garante que a empresa existe e pertence à mesma organização antes de criar o processo.
     get_company_or_404(organization_id, data["company_id"])
-    return processes_repo.create_process(organization_id, created_by, data)
+    process = processes_repo.create_process(organization_id, created_by, data)
+    company_events_repo.create_event(
+        organization_id,
+        process["company_id"],
+        event_type="process.created",
+        description=f"Processo de {process['type']} iniciado.",
+        payload={"process_type": process["type"]},
+        process_id=process["id"],
+        created_by=created_by,
+    )
+    return process

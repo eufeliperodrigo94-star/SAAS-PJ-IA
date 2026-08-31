@@ -77,3 +77,28 @@ class ActivityCreate(BaseModel):
 class ActivityOut(ActivityCreate):
     id: str
     company_id: str
+
+
+class TimelineEventOut(BaseModel):
+    id: str
+    company_id: str
+    process_id: str | None
+    event_type: str
+    description: str
+    payload: dict
+    created_at: str
+
+
+class CompanyMemoryOut(BaseModel):
+    """Instantâneo de memória empresarial: dados estruturados + histórico recente.
+
+    Usado para reaproveitar informações já conhecidas ao iniciar um novo
+    processo, sem depender da LLM para "lembrar" nada (ver docs/AI.md).
+    """
+
+    company: CompanyOut
+    partners: list[PartnerOut]
+    addresses: list[AddressOut]
+    activities: list[ActivityOut]
+    recent_events: list[TimelineEventOut]
+    open_processes: int

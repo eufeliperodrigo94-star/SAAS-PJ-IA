@@ -1,16 +1,19 @@
 from fastapi import APIRouter, Depends
 
 from app.core.security import AuthenticatedUser, require_organization
+from app.memory.company_memory import get_company_memory
 from app.schemas.company import (
     ActivityCreate,
     ActivityOut,
     AddressCreate,
     AddressOut,
     CompanyCreate,
+    CompanyMemoryOut,
     CompanyOut,
     CompanyUpdate,
     PartnerCreate,
     PartnerOut,
+    TimelineEventOut,
 )
 from app.services import company_service
 
@@ -26,7 +29,7 @@ def list_companies(user: AuthenticatedUser = Depends(require_organization)) -> l
 def create_company(
     payload: CompanyCreate, user: AuthenticatedUser = Depends(require_organization)
 ) -> dict:
-    return company_service.create_company(user.organization_id, payload.model_dump())
+    return company_service.create_company(user.organization_id, payload.model_dump(), user.id)
 
 
 @router.get("/{company_id}", response_model=CompanyOut)
@@ -43,7 +46,7 @@ def update_company(
     user: AuthenticatedUser = Depends(require_organization),
 ) -> dict:
     data = {k: v for k, v in payload.model_dump().items() if v is not None}
-    return company_service.update_company(user.organization_id, company_id, data)
+    return company_service.update_company(user.organization_id, company_id, data, user.id)
 
 
 @router.get("/{company_id}/partners", response_model=list[PartnerOut])
@@ -60,7 +63,7 @@ def create_partner(
     user: AuthenticatedUser = Depends(require_organization),
 ) -> dict:
     data = payload.model_dump(mode="json")
-    return company_service.add_partner(user.organization_id, company_id, data)
+    return company_service.add_partner(user.organization_id, company_id, data, user.id)
 
 
 @router.get("/{company_id}/addresses", response_model=list[AddressOut])
@@ -76,7 +79,9 @@ def create_address(
     payload: AddressCreate,
     user: AuthenticatedUser = Depends(require_organization),
 ) -> dict:
-    return company_service.add_address(user.organization_id, company_id, payload.model_dump())
+    return company_service.add_address(
+        user.organization_id, company_id, payload.model_dump(), user.id
+    )
 
 
 @router.get("/{company_id}/activities", response_model=list[ActivityOut])
@@ -92,4 +97,20 @@ def create_activity(
     payload: ActivityCreate,
     user: AuthenticatedUser = Depends(require_organization),
 ) -> dict:
-    return company_service.add_activity(user.organization_id, company_id, payload.model_dump())
+    return company_service.add_activity(
+        user.organization_id, company_id, payload.model_dump(), user.id
+    )
+
+
+@router.get("/{company_id}/timeline", response_model=list[TimelineEventOut])
+def get_timeline(
+    company_id: str, user: AuthenticatedUser = Depends(require_organization)
+) -> list[dict]:
+    return company_service.list_timeline(user.organization_id, company_id)
+
+
+@router.get("/{company_id}/memory", response_model=CompanyMemoryOut)
+def get_memory(
+    company_id: str, user: AuthenticatedUser = Depends(require_organization)
+) -> dict:
+    return get_company_memory(user.organization_id, company_id)
