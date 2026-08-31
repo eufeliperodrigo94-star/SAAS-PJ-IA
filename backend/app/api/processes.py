@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, Query
 
 from app.core.security import AuthenticatedUser, require_organization
 from app.schemas.process import ProcessCreate, ProcessOut
-from app.services import process_service
+from app.schemas.validation import ValidationOut, ValidationRunOut
+from app.services import process_service, validation_service
 
 router = APIRouter(prefix="/processes", tags=["processes"])
 
@@ -27,3 +28,17 @@ def get_process(
     process_id: str, user: AuthenticatedUser = Depends(require_organization)
 ) -> dict:
     return process_service.get_process_or_404(user.organization_id, process_id)
+
+
+@router.post("/{process_id}/validate", response_model=ValidationRunOut)
+def validate_process(
+    process_id: str, user: AuthenticatedUser = Depends(require_organization)
+) -> dict:
+    return validation_service.run_validation(user.organization_id, process_id, user.id)
+
+
+@router.get("/{process_id}/validations", response_model=list[ValidationOut])
+def list_validations(
+    process_id: str, user: AuthenticatedUser = Depends(require_organization)
+) -> list[dict]:
+    return validation_service.list_validations(user.organization_id, process_id)

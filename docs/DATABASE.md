@@ -42,8 +42,16 @@ agrega empresa + sócios + endereços + CNAEs + eventos recentes num único inst
 (`GET /companies/{id}/memory`), reutilizado ao iniciar novos processos — sem depender da LLM
 para "lembrar" nada (ver `AI.md`).
 
+## Dia 4 — motor de regras
+
+Sem migration nova: `rules` e `validations` já existiam desde o Dia 1. `supabase/seed/seed.sql`
+ganhou 4 regras reais para PE (`PE-CNAE-001`, `PE-END-001`, `PE-QSA-001`, `PE-QSA-002`), cada
+uma com um `condicao.check` implementado em `app/rules/checks.py` — ver `RULES.md`.
+`POST /processes/{id}/validate` substitui as `validations` do processo a cada execução e
+atualiza `processes.status` (`pendente_correcao` / `pronto_para_protocolo` / `em_validacao`).
+
 Tabelas adicionais previstas no escopo completo (conhecimento/RAG, uso de IA, integrações,
-notificações) entram nos dias 4–6, conforme `TODO.md`, para manter cada migration pequena e
+notificações) entram nos dias 5–6, conforme `TODO.md`, para manter cada migration pequena e
 revisável.
 
 ## RLS

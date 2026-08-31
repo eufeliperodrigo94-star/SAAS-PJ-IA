@@ -317,6 +317,14 @@ tr.clickable:hover {
 .badge.status-pronto_para_protocolo,
 .badge.status-protocolado { color: var(--ok); }
 
+.badge.result-ok { color: var(--ok); }
+.badge.result-atencao { color: var(--atencao); }
+.badge.result-erro { color: var(--erro); }
+
+.result-row.result-ok { border-left: 3px solid var(--ok); }
+.result-row.result-atencao { border-left: 3px solid var(--atencao); }
+.result-row.result-erro { border-left: 3px solid var(--erro); }
+
 .back-link {
   display: inline-block;
   margin-bottom: 16px;

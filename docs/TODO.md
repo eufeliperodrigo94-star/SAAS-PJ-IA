@@ -5,7 +5,7 @@
 | 1 | Arquitetura, Supabase, banco e autenticação | ✅ concluído |
 | 2 | Empresas, sócios, endereços, CNAEs e processos | ✅ concluído |
 | 3 | Memória empresarial e histórico | ✅ concluído |
-| 4 | Motor de regras e pré-validação | ⬜ |
+| 4 | Motor de regras e pré-validação | ✅ concluído |
 | 5 | Documentos + Claude + cruzamento | ⬜ |
 | 6 | Dashboard + relatório + assinatura | ⬜ |
 | 7 | Testes + segurança + deploy | ⬜ |
@@ -43,9 +43,22 @@
       (sócios, endereço atual, CNAEs, processos em aberto) antes de criar um novo processo.
 - [ ] Validar ponta a ponta com um projeto Supabase real.
 
+## Dia 4 — Motor de regras
+
+- [x] `app/rules/checks.py`: `company_has_activity`, `company_has_address`,
+      `company_has_partners`, `partners_percentual_sum`, `required_company_fields`.
+- [x] `app/rules/engine.py`: filtra regras ativas por UF/tipo de processo/vigência e despacha
+      para o check correspondente — nunca chama LLM.
+- [x] `app/services/validation_service.py`: persiste resultados em `validations` (substituindo
+      a execução anterior) e recalcula `processes.status`.
+- [x] Rotas `POST /processes/{id}/validate` e `GET /processes/{id}/validations`.
+- [x] Seed com 4 regras reais para PE (`PE-CNAE-001`, `PE-END-001`, `PE-QSA-001`, `PE-QSA-002`).
+- [x] Frontend: `process-detail.html` com botão "Executar pré-validação" e resultado
+      (OK/Atenção/Erro, evidência e ação sugerida); linkado a partir de `company.html`.
+- [ ] Validar ponta a ponta com um projeto Supabase real (aplicar seed e rodar uma validação).
+
 ## Próximos dias (visão geral)
 
-- **Dia 4:** `rules/engine.py`, validators e regras iniciais para PE; resultados OK/ATENÇÃO/ERRO.
 - **Dia 5:** AI Router + Claude provider; upload/extração/comparação de documentos.
 - **Dia 6:** Dashboard completo, relatório de pré-validação, planos e billing.
 - **Dia 7:** Testes automatizados, revisão de segurança/RLS, Dockerfile de produção e deploy.

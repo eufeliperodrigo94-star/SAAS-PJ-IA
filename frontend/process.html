@@ -50,8 +50,8 @@
         <p class="error-message" id="form-error"></p>
       </form>
       <p class="notice" style="margin-top: 16px">
-        A interpretação automática da descrição e a execução do motor de regras chegam nos
-        Dias 4 e 5. Por enquanto o processo é criado com status "rascunho".
+        Após criar o processo você poderá executar a pré-validação (motor de regras) e ver o
+        resultado. A interpretação automática da descrição por IA chega no Dia 5.
       </p>
     </div>
   </main>
@@ -98,7 +98,7 @@
     errorEl.textContent = "";
 
     try {
-      await apiFetch("/processes", {
+      const process = await apiFetch("/processes", {
         method: "POST",
         body: JSON.stringify({
           company_id: companyId,
@@ -106,7 +106,7 @@
           description: document.getElementById("process-description").value.trim() || null,
         }),
       });
-      window.location.href = `company.html?id=${companyId}`;
+      window.location.href = `process-detail.html?id=${process.id}`;
     } catch (err) {
       errorEl.textContent = err.message || "Não foi possível criar o processo.";
     }

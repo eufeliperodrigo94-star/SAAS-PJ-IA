@@ -31,3 +31,15 @@ def create_process(organization_id: str, created_by: str, data: dict) -> dict:
     payload = {**data, "organization_id": organization_id, "created_by": created_by}
     result = get_supabase_admin().table("processes").insert(payload).execute()
     return result.data[0]
+
+
+def update_status(organization_id: str, process_id: str, status: str) -> dict:
+    result = (
+        get_supabase_admin()
+        .table("processes")
+        .update({"status": status})
+        .eq("organization_id", organization_id)
+        .eq("id", process_id)
+        .execute()
+    )
+    return result.data[0]

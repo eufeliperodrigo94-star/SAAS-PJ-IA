@@ -178,7 +178,7 @@
     body.innerHTML = processes.length
       ? processes
           .map(
-            (p) => `<tr><td>${escapeHtml(p.type)}</td><td><span class="badge status-${p.status}">${escapeHtml(p.status)}</span></td><td>${formatDate(p.created_at)}</td></tr>`
+            (p) => `<tr class="clickable" onclick="window.location.href='process-detail.html?id=${p.id}'"><td>${escapeHtml(p.type)}</td><td><span class="badge status-${p.status}">${escapeHtml(p.status)}</span></td><td>${formatDate(p.created_at)}</td></tr>`
           )
           .join("")
       : '<tr><td colspan="3">Nenhum processo iniciado.</td></tr>';

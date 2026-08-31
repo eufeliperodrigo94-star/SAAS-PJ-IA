@@ -1,0 +1,136 @@
+<title>Processo — SaaS Pré-Validação Empresarial</title>
+<link rel="stylesheet" href="assets/style.css" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="assets/config.js"></script>
+<script src="assets/app.js"></script>
+
+<div class="app-shell">
+  <aside class="sidebar">
+    <h2>Pré-Validação PE</h2>
+    <nav>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="companies.html" class="active">Empresas</a>
+      <a href="#" title="Disponível no Dia 5">Documentos</a>
+      <a href="#" title="Disponível no Dia 5">Assistente IA</a>
+      <a href="#" title="Disponível no Dia 6">Assinatura</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <strong>Processo</strong>
+      <button id="logout-button" type="button">Sair</button>
+    </div>
+
+    <a class="back-link" id="back-link" href="companies.html">← Voltar para a empresa</a>
+
+    <div class="panel" id="process-panel">Carregando…</div>
+
+    <div class="panel">
+      <div class="topbar" style="margin-bottom: 16px">
+        <h2 style="margin: 0">Resultado da pré-validação</h2>
+        <button class="secondary" id="validate-button" type="button">Executar pré-validação</button>
+      </div>
+      <p class="notice" style="margin-bottom: 16px">
+        As regras rodam de forma determinística (sem IA) contra os dados já cadastrados da
+        empresa. Isto é uma pré-análise — não substitui a decisão do órgão oficial.
+      </p>
+      <div id="validations-list">
+        <p class="notice">Nenhuma pré-validação executada ainda.</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const processId = params.get("id");
+
+  function escapeHtml(value) {
+    const div = document.createElement("div");
+    div.textContent = value ?? "";
+    return div.innerHTML;
+  }
+
+  function formatDateTime(iso) {
+    return iso ? new Date(iso).toLocaleString("pt-BR") : "—";
+  }
+
+  const RESULT_LABELS = { ok: "OK", atencao: "Atenção", erro: "Erro" };
+
+  let currentProcess = null;
+
+  function renderProcess(process) {
+    currentProcess = process;
+    document.getElementById("back-link").href = `company.html?id=${process.company_id}`;
+    document.getElementById("process-panel").innerHTML = `
+      <h2>${escapeHtml(process.type)}</h2>
+      <p style="color: var(--text-muted); margin: 0 0 8px">
+        Status: <span class="badge status-${process.status}">${escapeHtml(process.status)}</span>
+      </p>
+      ${process.description ? `<p style="margin: 0">${escapeHtml(process.description)}</p>` : ""}`;
+  }
+
+  function renderValidations(validations) {
+    const container = document.getElementById("validations-list");
+    if (!validations.length) {
+      container.innerHTML = '<p class="notice">Nenhuma pré-validação executada ainda.</p>';
+      return;
+    }
+
+    const rows = validations
+      .map(
+        (v) => `
+      <div class="panel result-row result-${v.result}" style="margin-bottom: 12px; padding: 16px">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px">
+          <span class="badge result-${v.result}">${RESULT_LABELS[v.result] || escapeHtml(v.result)}</span>
+        </div>
+        <p style="margin: 0 0 4px">${escapeHtml(v.message)}</p>
+        ${v.suggested_action ? `<p style="margin: 0; color: var(--text-muted)">Ação sugerida: ${escapeHtml(v.suggested_action)}</p>` : ""}
+      </div>`
+      )
+      .join("");
+    container.innerHTML = rows;
+  }
+
+  async function loadProcess() {
+    const process = await apiFetch(`/processes/${processId}`);
+    renderProcess(process);
+  }
+
+  async function loadValidations() {
+    const validations = await apiFetch(`/processes/${processId}/validations`);
+    renderValidations(validations);
+  }
+
+  document.getElementById("validate-button").addEventListener("click", async () => {
+    const button = document.getElementById("validate-button");
+    button.disabled = true;
+    button.textContent = "Executando…";
+    try {
+      const result = await apiFetch(`/processes/${processId}/validate`, { method: "POST" });
+      renderProcess(result.process);
+      renderValidations(result.validations);
+    } catch (err) {
+      alert(err.message || "Não foi possível executar a pré-validação.");
+    } finally {
+      button.disabled = false;
+      button.textContent = "Executar pré-validação";
+    }
+  });
+
+  (async () => {
+    if (!processId) {
+      window.location.href = "companies.html";
+      return;
+    }
+    await requireSession();
+    document.getElementById("logout-button").addEventListener("click", signOut);
+    try {
+      await loadProcess();
+      await loadValidations();
+    } catch (err) {
+      document.getElementById("process-panel").innerHTML = `<p class="error-message">${escapeHtml(err.message)}</p>`;
+    }
+  })();
+</script>
