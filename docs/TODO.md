@@ -92,7 +92,9 @@
       pré-análise) a partir das `validations` já persistidas.
 - [x] Frontend: `assinatura.html` (plano atual + troca de plano), `dashboard.html` com números
       reais + plano + consumo de IA, seção de relatório em `process-detail.html`.
-- [ ] Validar troca de plano e bloqueio de limite com um projeto Supabase real.
+- [x] Validado ponta a ponta em produção (Render + Supabase real): assinatura Starter criada
+      automaticamente, troca de plano, criação de empresa/processo, pré-validação, relatório
+      completo e dashboard refletindo os números reais.
 
 ## Próximos dias (visão geral)
 
