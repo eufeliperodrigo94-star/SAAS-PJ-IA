@@ -45,6 +45,17 @@ def update_status(organization_id: str, process_id: str, status: str) -> dict:
     return result.data[0]
 
 
+def count_total(organization_id: str) -> int:
+    result = (
+        get_supabase_admin()
+        .table("processes")
+        .select("id", count="exact")
+        .eq("organization_id", organization_id)
+        .execute()
+    )
+    return result.count or 0
+
+
 def count_by_status(organization_id: str, statuses: list[str]) -> int:
     result = (
         get_supabase_admin()

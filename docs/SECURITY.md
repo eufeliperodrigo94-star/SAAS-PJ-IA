@@ -55,6 +55,19 @@ banco real) para validar, através das rotas HTTP e não só das funções de se
 - troca de plano por `viewer` → `403`; por `owner` → `200`;
 - `/health` segue público.
 
+## Painel super-admin da plataforma
+
+Adicionado após o Dia 7: uma flag `users.is_super_admin` (migration `0005_platform_admin.sql`)
+e uma dependência `require_super_admin` (`app/core/security.py`) protegendo as rotas `/admin/*`
+(`app/api/admin.py`) — listar todas as organizações com plano/contadores, ver os usuários de
+qualquer organização, trocar o plano de qualquer organização e ver métricas globais de IA. É
+deliberadamente ortogonal ao RBAC por organização (`organization_role`): um super admin não
+precisa pertencer a nenhuma organização para usar essas rotas. Promoção a super admin é manual
+via SQL — não existe endpoint para isso, para não abrir uma via de escalonamento de privilégio
+pela própria API. Coberto por testes unitários (`test_require_super_admin.py`,
+`test_admin_service.py`) e de integração (`test_integration_isolation.py`: rota `/admin/*`
+bloqueada para usuário comum, liberada para super admin).
+
 ## Limitações conhecidas (fora do escopo do MVP)
 
 - **Sem rate limiting nos endpoints que chamam IA** (`POST /documents/{id}/extract`,

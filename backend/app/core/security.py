@@ -73,6 +73,7 @@ class AuthenticatedUser:
     email: str | None
     organization_id: str | None
     role: str | None
+    is_super_admin: bool = False
 
 
 def get_current_user(
@@ -86,9 +87,10 @@ def get_current_user(
     if not user_id:
         raise NotAuthenticatedError("Token sem identificação de usuário.")
 
+    admin = get_supabase_admin()
+
     membership = (
-        get_supabase_admin()
-        .table("organization_users")
+        admin.table("organization_users")
         .select("organization_id, role")
         .eq("user_id", user_id)
         .limit(1)
@@ -96,11 +98,17 @@ def get_current_user(
     )
     row = membership.data[0] if membership.data else None
 
+    profile = (
+        admin.table("users").select("is_super_admin").eq("id", user_id).limit(1).execute()
+    )
+    is_super_admin = bool(profile.data[0]["is_super_admin"]) if profile.data else False
+
     return AuthenticatedUser(
         id=user_id,
         email=payload.get("email"),
         organization_id=row["organization_id"] if row else None,
         role=row["role"] if row else None,
+        is_super_admin=is_super_admin,
     )
 
 
@@ -109,6 +117,14 @@ def require_organization(
 ) -> AuthenticatedUser:
     if not user.organization_id:
         raise NotAuthenticatedError("Usuário não pertence a nenhuma organização.")
+    return user
+
+
+def require_super_admin(user: AuthenticatedUser = Depends(get_current_user)) -> AuthenticatedUser:
+    """Dependência para as rotas de administração da plataforma (/admin/*) —
+    cruzam organizações e por isso nunca ficam atrás de require_organization."""
+    if not user.is_super_admin:
+        raise NotAuthorizedError("Ação restrita a administradores da plataforma.")
     return user
 
 

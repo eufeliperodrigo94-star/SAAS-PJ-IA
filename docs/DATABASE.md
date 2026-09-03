@@ -74,6 +74,17 @@ atual) e `GET /processes/{id}/report` monta o relatório de pré-validação a p
 Tabelas adicionais previstas no escopo completo (conhecimento/RAG, integrações, notificações)
 entram no Dia 7, conforme `TODO.md`, para manter cada migration pequena e revisável.
 
+## Painel super-admin da plataforma (`0005_platform_admin.sql`)
+
+`users` ganhou a coluna `is_super_admin boolean` (default `false`). Não é um papel de
+`organization_role` — é ortogonal a qualquer organização e habilita as rotas `/admin/*`
+(`app/api/admin.py`, protegidas por `require_super_admin` em `app/core/security.py`), que listam
+todas as organizações, o detalhe de usuários de qualquer uma delas, trocam o plano de qualquer
+organização e mostram métricas globais (organizações, empresas, processos, consumo de IA). Sem
+policy de RLS nova: o backend usa a `service_role` key e faz essa checagem no próprio código.
+Promover alguém a super admin hoje é manual (`update users set is_super_admin = true where id = ...`)
+— não há UI para isso, de propósito, dado o alcance da permissão.
+
 ## RLS
 
 Toda tabela de domínio tem RLS habilitado com policy baseada em:

@@ -13,9 +13,17 @@ from app.main import app
 client = TestClient(app)
 
 
-def _override_user(organization_id: str, role: str = "owner", user_id: str = "user-1"):
+def _override_user(
+    organization_id: str, role: str = "owner", user_id: str = "user-1", is_super_admin: bool = False
+):
     def _fake_user() -> AuthenticatedUser:
-        return AuthenticatedUser(id=user_id, email="a@b.com", organization_id=organization_id, role=role)
+        return AuthenticatedUser(
+            id=user_id,
+            email="a@b.com",
+            organization_id=organization_id,
+            role=role,
+            is_super_admin=is_super_admin,
+        )
 
     return _fake_user
 
@@ -141,3 +149,34 @@ def test_change_plan_allows_owner(monkeypatch):
 
     assert response.status_code == 200
     assert response.json()["plan"]["code"] == "pro"
+
+
+def test_admin_routes_are_blocked_for_regular_users():
+    app.dependency_overrides[get_current_user] = _override_user("org-a", role="owner")
+
+    response = client.get("/admin/organizations")
+
+    assert response.status_code == 403
+
+
+def test_admin_can_list_organizations(monkeypatch):
+    monkeypatch.setattr(
+        "app.services.admin_service.list_organizations",
+        lambda: [
+            {
+                "id": "org-a",
+                "name": "Escritório A",
+                "created_at": "2026-01-01T00:00:00Z",
+                "plan": None,
+                "user_count": 1,
+                "company_count": 0,
+                "process_count": 0,
+            }
+        ],
+    )
+
+    app.dependency_overrides[get_current_user] = _override_user("org-a", is_super_admin=True)
+    response = client.get("/admin/organizations")
+
+    assert response.status_code == 200
+    assert response.json()[0]["id"] == "org-a"

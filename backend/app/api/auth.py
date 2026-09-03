@@ -14,6 +14,7 @@ def me(user: AuthenticatedUser = Depends(get_current_user)) -> MeResponse:
         email=user.email,
         organization_id=user.organization_id,
         role=user.role,
+        is_super_admin=user.is_super_admin,
     )
 
 
