@@ -10,6 +10,7 @@ from app.api import (
     dashboard,
     documents,
     health,
+    organizations,
     processes,
     support,
 )
@@ -38,6 +39,7 @@ app.include_router(auth.router)
 app.include_router(admin.router)
 app.include_router(dashboard.router)
 app.include_router(companies.router)
+app.include_router(organizations.router)
 app.include_router(processes.router)
 app.include_router(documents.router)
 app.include_router(assistant.router)
