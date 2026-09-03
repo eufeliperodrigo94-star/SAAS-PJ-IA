@@ -12,7 +12,8 @@
       <a href="companies.html" class="active">Empresas</a>
       <a href="#documents-body">Documentos</a>
       <a href="#assistant-form">Assistente IA</a>
-      <a href="#" title="Disponível no Dia 6">Assinatura</a>
+      <a href="assinatura.html">Assinatura</a>
+      <a href="admin.html" id="nav-admin" style="display: none">Admin</a>
     </nav>
   </aside>
 
@@ -37,6 +38,16 @@
       </p>
       <div id="validations-list">
         <p class="notice">Nenhuma pré-validação executada ainda.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="topbar" style="margin-bottom: 16px">
+        <h2 style="margin: 0">Relatório de pré-validação</h2>
+        <button class="secondary" id="report-button" type="button">Gerar relatório</button>
+      </div>
+      <div id="report-content">
+        <p class="notice">Gere o relatório para ver o resumo completo (erros, alertas, itens OK, regras aplicadas e ações recomendadas).</p>
       </div>
     </div>
 
@@ -148,6 +159,60 @@
     const validations = await apiFetch(`/processes/${processId}/validations`);
     renderValidations(validations);
   }
+
+  function renderReport(report) {
+    const container = document.getElementById("report-content");
+    const section = (title, items, toneClass) =>
+      items.length
+        ? `<h3>${title} (${items.length})</h3>` +
+          items
+            .map(
+              (item) => `
+          <div class="panel result-row ${toneClass}" style="margin-bottom: 10px; padding: 14px">
+            <p style="margin: 0 0 4px">${escapeHtml(item.message)}</p>
+            ${item.rule_codigo ? `<p style="margin: 0; font-size: 0.8rem; color: var(--text-muted)">Regra: ${escapeHtml(item.rule_codigo)}</p>` : ""}
+            ${item.suggested_action ? `<p style="margin: 4px 0 0; color: var(--text-muted)">Ação sugerida: ${escapeHtml(item.suggested_action)}</p>` : ""}
+          </div>`
+            )
+            .join("")
+        : "";
+
+    container.innerHTML = `
+      <p style="margin: 0 0 8px"><strong>${escapeHtml(report.company_name)}</strong> — ${escapeHtml(report.process_type)}</p>
+      <p style="margin: 0 0 16px; color: var(--text-muted)">${escapeHtml(report.resumo)}</p>
+      ${section("Erros", report.erros, "result-erro")}
+      ${section("Alertas", report.alertas, "result-atencao")}
+      ${section("Itens OK", report.itens_ok, "result-ok")}
+      ${
+        report.acoes_recomendadas.length
+          ? `<h3>Ações recomendadas</h3><ul>${report.acoes_recomendadas.map((a) => `<li>${escapeHtml(a)}</li>`).join("")}</ul>`
+          : ""
+      }
+      ${
+        report.regras_aplicadas.length
+          ? `<h3>Regras aplicadas</h3><ul>${report.regras_aplicadas.map((r) => `<li>${escapeHtml(r.codigo)} — ${escapeHtml(r.nome)} (v${r.versao})</li>`).join("")}</ul>`
+          : ""
+      }
+      <p style="margin: 16px 0 0; font-size: 0.85rem; color: var(--text-muted)">
+        Documentos enviados: ${report.documentos_enviados} · Gerado em ${formatDateTime2(report.generated_at)}
+      </p>
+      <p class="notice" style="margin-top: 12px">${escapeHtml(report.aviso)}</p>`;
+  }
+
+  document.getElementById("report-button").addEventListener("click", async () => {
+    const button = document.getElementById("report-button");
+    button.disabled = true;
+    button.textContent = "Gerando…";
+    try {
+      const report = await apiFetch(`/processes/${processId}/report`);
+      renderReport(report);
+    } catch (err) {
+      alert(err.message || "Não foi possível gerar o relatório.");
+    } finally {
+      button.disabled = false;
+      button.textContent = "Gerar relatório";
+    }
+  });
 
   function formatDateTime2(iso) {
     return iso ? new Date(iso).toLocaleString("pt-BR") : "—";
@@ -272,6 +337,7 @@
       return;
     }
     await requireSession();
+    showAdminNavIfSuperAdmin();
     document.getElementById("logout-button").addEventListener("click", signOut);
     try {
       await loadProcess();

@@ -1,6 +1,7 @@
 from app.core.exceptions import DomainError
 from app.core.security import AuthenticatedUser
 from app.core.supabase_client import get_supabase_admin
+from app.services import billing_service
 
 
 def register_organization(user: AuthenticatedUser, organization_name: str, full_name: str | None) -> dict:
@@ -33,5 +34,7 @@ def register_organization(user: AuthenticatedUser, organization_name: str, full_
             "entity_id": organization["id"],
         }
     ).execute()
+
+    billing_service.ensure_default_subscription(organization["id"])
 
     return {"id": organization["id"], "name": organization["name"], "role": "owner"}

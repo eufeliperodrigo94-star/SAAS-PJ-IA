@@ -12,7 +12,8 @@
       <a href="companies.html" class="active">Empresas</a>
       <a href="#" title="Abra um processo para enviar documentos">Documentos</a>
       <a href="#" title="Abra um processo para usar o assistente">Assistente IA</a>
-      <a href="#" title="Disponível no Dia 6">Assinatura</a>
+      <a href="assinatura.html">Assinatura</a>
+      <a href="admin.html" id="nav-admin" style="display: none">Admin</a>
     </nav>
   </aside>
 
@@ -276,6 +277,7 @@
       return;
     }
     await requireSession();
+    showAdminNavIfSuperAdmin();
     document.getElementById("logout-button").addEventListener("click", signOut);
     try {
       await Promise.all([

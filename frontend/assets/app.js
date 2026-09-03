@@ -54,3 +54,14 @@ async function signOut() {
   await supabaseClient.auth.signOut();
   window.location.href = "login.html";
 }
+
+async function showAdminNavIfSuperAdmin() {
+  const navAdmin = document.getElementById("nav-admin");
+  if (!navAdmin) return;
+  try {
+    const me = await apiFetch("/auth/me");
+    navAdmin.style.display = me.is_super_admin ? "" : "none";
+  } catch (_) {
+    // sessão ainda carregando ou erro de rede — mantém o link oculto.
+  }
+}

@@ -1,0 +1,181 @@
+<title>Admin — SaaS Pré-Validação Empresarial</title>
+<link rel="stylesheet" href="assets/style.css" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="assets/config.js"></script>
+<script src="assets/app.js"></script>
+
+<div class="app-shell">
+  <aside class="sidebar">
+    <h2>Pré-Validação PE</h2>
+    <nav>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="companies.html">Empresas</a>
+      <a href="#" title="Abra um processo para enviar documentos">Documentos</a>
+      <a href="#" title="Abra um processo para usar o assistente">Assistente IA</a>
+      <a href="assinatura.html">Assinatura</a>
+      <a href="admin.html" class="active">Admin</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <strong>Painel do administrador da plataforma</strong>
+      <button id="logout-button" type="button">Sair</button>
+    </div>
+
+    <div id="denied-notice" class="notice" style="display: none">
+      Esta área é restrita a administradores da plataforma.
+      <a href="dashboard.html">Voltar ao dashboard</a>.
+    </div>
+
+    <div id="admin-content" style="display: none">
+      <div class="stat-grid" id="metrics-grid">Carregando…</div>
+
+      <div class="panel">
+        <h2>Organizações</h2>
+        <div id="organizations-table">Carregando…</div>
+      </div>
+
+      <div class="panel" id="org-detail-panel" style="display: none">
+        <h2 id="org-detail-title">Detalhe da organização</h2>
+        <div id="org-detail-content"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  function escapeHtml(value) {
+    const div = document.createElement("div");
+    div.textContent = value ?? "";
+    return div.innerHTML;
+  }
+
+  function formatPrice(cents) {
+    return cents == null ? "sob consulta" : "R$ " + (cents / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+  }
+
+  async function loadMetrics() {
+    const metrics = await apiFetch("/admin/metrics");
+    const usage = metrics.ai_usage_last_30_days;
+    document.getElementById("metrics-grid").innerHTML = `
+      <div class="stat-card">
+        <div class="value">${metrics.total_organizations}</div>
+        <div class="label">Organizações</div>
+      </div>
+      <div class="stat-card">
+        <div class="value">${metrics.total_companies}</div>
+        <div class="label">Empresas</div>
+      </div>
+      <div class="stat-card">
+        <div class="value">${metrics.total_processes}</div>
+        <div class="label">Processos</div>
+      </div>
+      <div class="stat-card">
+        <div class="value">${usage.calls}</div>
+        <div class="label">Chamadas de IA (30 dias)</div>
+      </div>`;
+  }
+
+  async function loadOrganizationDetail(organizationId) {
+    const detail = await apiFetch(`/admin/organizations/${organizationId}`);
+    const panel = document.getElementById("org-detail-panel");
+    document.getElementById("org-detail-title").textContent = `Organização · ${detail.name}`;
+
+    const usersRows = detail.users
+      .map(
+        (u) => `
+      <tr>
+        <td>${escapeHtml(u.users ? u.users.email : "—")}</td>
+        <td>${escapeHtml(u.role)}</td>
+      </tr>`
+      )
+      .join("");
+
+    panel.innerHTML = `
+      <table style="margin-bottom: 16px">
+        <thead><tr><th>E-mail</th><th>Papel</th></tr></thead>
+        <tbody>${usersRows || '<tr><td colspan="2">Nenhum usuário.</td></tr>'}</tbody>
+      </table>
+      <label for="admin-plan-select">Trocar plano desta organização</label>
+      <div style="display: flex; gap: 8px; margin-top: 4px">
+        <select id="admin-plan-select"></select>
+        <button class="secondary" id="admin-plan-submit" type="button">Aplicar</button>
+      </div>
+      <p class="error-message" id="admin-plan-error"></p>`;
+    panel.style.display = "block";
+    document.getElementById("org-detail-title").scrollIntoView({ behavior: "smooth" });
+
+    const plans = await apiFetch("/plans");
+    const select = document.getElementById("admin-plan-select");
+    select.innerHTML = plans
+      .map(
+        (p) =>
+          `<option value="${p.code}" ${detail.plan && detail.plan.code === p.code ? "selected" : ""}>${escapeHtml(p.name)} (${formatPrice(p.price_cents)})</option>`
+      )
+      .join("");
+
+    document.getElementById("admin-plan-submit").addEventListener("click", async () => {
+      const errorEl = document.getElementById("admin-plan-error");
+      errorEl.textContent = "";
+      try {
+        await apiFetch(`/admin/organizations/${organizationId}/change-plan`, {
+          method: "POST",
+          body: JSON.stringify({ plan_code: select.value }),
+        });
+        await loadOrganizations();
+        await loadOrganizationDetail(organizationId);
+      } catch (err) {
+        errorEl.textContent = err.message || "Não foi possível trocar o plano.";
+      }
+    });
+  }
+
+  async function loadOrganizations() {
+    const organizations = await apiFetch("/admin/organizations");
+    const rows = organizations
+      .map(
+        (org) => `
+      <tr>
+        <td>${escapeHtml(org.name)}</td>
+        <td>${org.plan ? escapeHtml(org.plan.name) : "sem plano"}</td>
+        <td>${org.user_count}</td>
+        <td>${org.company_count}</td>
+        <td>${org.process_count}</td>
+        <td><button class="secondary" data-org-id="${org.id}">Ver detalhes</button></td>
+      </tr>`
+      )
+      .join("");
+
+    document.getElementById("organizations-table").innerHTML = `
+      <table>
+        <thead>
+          <tr><th>Organização</th><th>Plano</th><th>Usuários</th><th>Empresas</th><th>Processos</th><th></th></tr>
+        </thead>
+        <tbody>${rows || '<tr><td colspan="6">Nenhuma organização cadastrada.</td></tr>'}</tbody>
+      </table>`;
+
+    document.querySelectorAll("button[data-org-id]").forEach((button) => {
+      button.addEventListener("click", () => loadOrganizationDetail(button.dataset.orgId));
+    });
+  }
+
+  (async () => {
+    await requireSession();
+    document.getElementById("logout-button").addEventListener("click", signOut);
+
+    try {
+      const me = await apiFetch("/auth/me");
+      if (!me.is_super_admin) {
+        document.getElementById("denied-notice").style.display = "block";
+        return;
+      }
+      document.getElementById("admin-content").style.display = "block";
+      await loadMetrics();
+      await loadOrganizations();
+    } catch (err) {
+      document.getElementById("denied-notice").textContent = err.message || "Não foi possível carregar o painel.";
+      document.getElementById("denied-notice").style.display = "block";
+    }
+  })();
+</script>

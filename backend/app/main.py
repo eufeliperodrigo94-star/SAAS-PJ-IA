@@ -1,7 +1,17 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import assistant, auth, companies, dashboard, documents, health, processes
+from app.api import (
+    admin,
+    assistant,
+    auth,
+    billing,
+    companies,
+    dashboard,
+    documents,
+    health,
+    processes,
+)
 from app.core.config import get_settings
 from app.core.exceptions import DomainError, domain_error_handler, unhandled_error_handler
 from app.core.logging import configure_logging
@@ -24,8 +34,10 @@ app.add_exception_handler(Exception, unhandled_error_handler)
 
 app.include_router(health.router)
 app.include_router(auth.router)
+app.include_router(admin.router)
 app.include_router(dashboard.router)
 app.include_router(companies.router)
 app.include_router(processes.router)
 app.include_router(documents.router)
 app.include_router(assistant.router)
+app.include_router(billing.router)

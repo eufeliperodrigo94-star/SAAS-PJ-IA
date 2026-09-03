@@ -7,8 +7,8 @@
 | 3 | Memória empresarial e histórico | ✅ concluído |
 | 4 | Motor de regras e pré-validação | ✅ concluído |
 | 5 | Documentos + Claude + cruzamento | ✅ concluído |
-| 6 | Dashboard + relatório + assinatura | ⬜ |
-| 7 | Testes + segurança + deploy | ⬜ |
+| 6 | Dashboard + relatório + assinatura | ✅ concluído |
+| 7 | Testes + segurança + deploy | ✅ concluído |
 
 ## Dia 1 — Fundação
 
@@ -78,9 +78,48 @@
 - [ ] Validar ponta a ponta com `ANTHROPIC_API_KEY` real e um projeto Supabase real (upload +
       extração + assistente).
 
+## Dia 6 — Dashboard, relatório e assinatura
+
+- [x] `app/billing/provider.py`: interface `BillingProvider` + `NullBillingProvider` (sem
+      gateway real ainda — trocar de plano é direto, sem cobrança).
+- [x] `app/services/billing_service.py`: assinatura padrão (Starter, trialing) criada ao
+      registrar organização; `check_company_limit` bloqueia cadastro de empresa acima do plano.
+- [x] Rotas `GET /plans`, `GET /subscriptions`, `POST /subscriptions/change-plan`.
+- [x] `GET /dashboard/summary` com números reais: processos por status, validações por
+      resultado, consumo de IA (últimos 30 dias) e plano atual.
+- [x] `GET /processes/{id}/report`: relatório de pré-validação (resumo, erros, alertas, itens
+      OK, documentos enviados, regras aplicadas com versão, ações recomendadas, aviso de
+      pré-análise) a partir das `validations` já persistidas.
+- [x] Frontend: `assinatura.html` (plano atual + troca de plano), `dashboard.html` com números
+      reais + plano + consumo de IA, seção de relatório em `process-detail.html`.
+- [x] Validado ponta a ponta em produção (Render + Supabase real): assinatura Starter criada
+      automaticamente, troca de plano, criação de empresa/processo, pré-validação, relatório
+      completo e dashboard refletindo os números reais.
+
+## Dia 7 — Testes, segurança e deploy
+
+- [x] Revisão de segurança: RLS habilitado nas 16 tabelas, todas as rotas usam dependências de
+      auth (`require_organization`/`require_roles`), CORS restrito às origens configuradas,
+      nenhum segredo versionado no repositório, logs não capturam dados sensíveis.
+- [x] Corrigido: nomes de arquivo enviados ao Storage agora são sanitizados
+      (`app/repositories/documents_repo._sanitize_filename`) — remove segmentos de caminho
+      (`../`, `C:\...`) e caracteres inseguros antes de compor a chave do objeto.
+- [x] Adicionado controle de papéis (`app/core/security.require_roles`) e aplicado à troca de
+      plano (`POST /subscriptions/change-plan`, restrita a `owner`/`admin`) — a ação de billing
+      mais sensível hoje exposta.
+- [x] Testes de integração via API (`tests/test_integration_isolation.py`, `TestClient`):
+      rota protegida sem token → 401; isolamento multi-tenant real entre duas organizações
+      (lista e detalhe de empresa); limite de 10 MB no upload de documentos → 413; RBAC na troca
+      de plano → 403 para `viewer`, 200 para `owner`; `/health` público.
+- [x] Ver `docs/SECURITY.md` para o resumo completo da revisão (o que foi verificado, o que foi
+      corrigido e limitações conhecidas ainda não endereçadas).
+- [x] Suíte completa validada: 69 testes passando (`pytest -q` em `backend/`).
+
 ## Próximos dias (visão geral)
 
-- **Dia 6:** Dashboard completo, relatório de pré-validação, planos e billing.
-- **Dia 7:** Testes automatizados, revisão de segurança/RLS, Dockerfile de produção e deploy.
+O MVP dos 7 dias está concluído. Melhorias futuras (fora do escopo do MVP) estão listadas em
+`docs/SECURITY.md` (limitações conhecidas) e incluem: rate limiting nos endpoints que chamam a
+IA, gateway de pagamento real (hoje `NullBillingProvider`), e substituição do frontend pelo
+visual aprovado no Claude Design.
 
 Trabalhe em tarefas pequenas; leia apenas os arquivos de `docs/` necessários para cada etapa.

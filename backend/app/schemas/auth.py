@@ -17,3 +17,4 @@ class MeResponse(BaseModel):
     email: str | None
     organization_id: str | None
     role: str | None
+    is_super_admin: bool = False

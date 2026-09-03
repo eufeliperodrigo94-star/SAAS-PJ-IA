@@ -94,8 +94,14 @@ docker compose up --build
 
 ## Documentação
 
-Veja `docs/` para arquitetura, banco de dados, motor de regras e uso de IA.
+Veja `docs/` para arquitetura, banco de dados, motor de regras, uso de IA e a revisão de
+segurança (`docs/SECURITY.md`).
 
 ## Status
 
-Progresso seguindo `docs/TODO.md` (cronograma de 7 dias). Dia 1: fundação, banco e autenticação.
+MVP dos 7 dias concluído (ver `docs/TODO.md`): autenticação e multi-tenant, empresas/sócios/
+endereços/CNAEs/processos, memória empresarial (timeline), motor de regras determinístico,
+documentos + extração e cruzamento via IA + assistente em linguagem natural, dashboard +
+relatório de pré-validação + assinatura/planos, e revisão de segurança + testes de integração de
+isolamento multi-tenant. Deploy em produção: Render (backend) + Vercel (frontend) + Supabase
+(banco/auth/storage). 69 testes automatizados passando (`pytest -q` em `backend/`).
