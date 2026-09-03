@@ -371,11 +371,23 @@
       .join("");
 
     document.getElementById("sales-content").innerHTML = `
-      <div class="stat-grid" style="margin-bottom: 20px">
-        <div class="stat-card"><div class="value">${formatPrice(sales.mrr_cents)}</div><div class="label">MRR</div></div>
-        <div class="stat-card"><div class="value">${sales.active_subscriptions}</div><div class="label">Assinaturas ativas</div></div>
-        <div class="stat-card"><div class="value">${sales.trialing_subscriptions}</div><div class="label">Em trial</div></div>
-        <div class="stat-card"><div class="value">${(sales.conversion_rate * 100).toFixed(1)}%</div><div class="label">Taxa de conversão</div></div>
+      <div class="metric-grid">
+        <div class="metric-card">
+          <div class="metric-ic c-green"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+          <div class="metric-body"><div class="value">${formatPrice(sales.mrr_cents)}</div><div class="label">MRR</div></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-ic c-blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="9" cy="7" r="4"/><path d="M2 21v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2"/><circle cx="18" cy="8" r="3"/></svg></div>
+          <div class="metric-body"><div class="value">${sales.active_subscriptions}</div><div class="label">Assinaturas ativas</div></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-ic c-amber"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg></div>
+          <div class="metric-body"><div class="value">${sales.trialing_subscriptions}</div><div class="label">Em trial</div></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-ic c-violet"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+          <div class="metric-body"><div class="value">${(sales.conversion_rate * 100).toFixed(1)}%</div><div class="label">Taxa de conversão</div></div>
+        </div>
       </div>
       <table>
         <thead><tr><th>Plano</th><th>Assinaturas</th><th>MRR</th></tr></thead>
