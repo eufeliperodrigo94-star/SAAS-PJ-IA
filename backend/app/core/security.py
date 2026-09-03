@@ -6,7 +6,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 
 from app.core.config import get_settings
-from app.core.exceptions import NotAuthenticatedError
+from app.core.exceptions import NotAuthenticatedError, NotAuthorizedError
 from app.core.supabase_client import get_supabase_admin
 
 bearer_scheme = HTTPBearer(auto_error=False)
@@ -110,3 +110,17 @@ def require_organization(
     if not user.organization_id:
         raise NotAuthenticatedError("Usuário não pertence a nenhuma organização.")
     return user
+
+
+def require_roles(*roles: str):
+    """Dependency factory para restringir uma rota a determinados papéis
+    (ver organization_role no banco). Ex.: Depends(require_roles("owner", "admin"))."""
+
+    def dependency(user: AuthenticatedUser = Depends(require_organization)) -> AuthenticatedUser:
+        if user.role not in roles:
+            raise NotAuthorizedError(
+                f"Ação restrita aos papéis: {', '.join(roles)}."
+            )
+        return user
+
+    return dependency

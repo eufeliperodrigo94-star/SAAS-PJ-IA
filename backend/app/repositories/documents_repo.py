@@ -1,3 +1,4 @@
+import re
 import uuid
 from datetime import datetime, timezone
 
@@ -5,9 +6,21 @@ from app.core.supabase_client import get_supabase_admin
 
 BUCKET = "documents"
 
+# Mantém apenas caracteres seguros para uma chave de Storage — sem barras,
+# nem sequências "..", removendo qualquer risco de o nome de arquivo
+# escapar da pasta "{organization_id}/{process_id}/" do objeto.
+_UNSAFE_FILENAME_CHARS = re.compile(r"[^A-Za-z0-9._-]+")
+
+
+def _sanitize_filename(filename: str) -> str:
+    name = filename.rsplit("/", 1)[-1].rsplit("\\", 1)[-1]
+    name = _UNSAFE_FILENAME_CHARS.sub("_", name).lstrip(".") or "arquivo"
+    return name[:200]
+
 
 def upload_file(organization_id: str, process_id: str, filename: str, content: bytes, content_type: str | None) -> str:
-    storage_path = f"{organization_id}/{process_id}/{uuid.uuid4()}_{filename}"
+    safe_filename = _sanitize_filename(filename)
+    storage_path = f"{organization_id}/{process_id}/{uuid.uuid4()}_{safe_filename}"
     get_supabase_admin().storage.from_(BUCKET).upload(
         storage_path,
         content,

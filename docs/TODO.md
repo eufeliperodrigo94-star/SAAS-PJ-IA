@@ -8,7 +8,7 @@
 | 4 | Motor de regras e pré-validação | ✅ concluído |
 | 5 | Documentos + Claude + cruzamento | ✅ concluído |
 | 6 | Dashboard + relatório + assinatura | ✅ concluído |
-| 7 | Testes + segurança + deploy | ⬜ |
+| 7 | Testes + segurança + deploy | ✅ concluído |
 
 ## Dia 1 — Fundação
 
@@ -96,8 +96,30 @@
       automaticamente, troca de plano, criação de empresa/processo, pré-validação, relatório
       completo e dashboard refletindo os números reais.
 
+## Dia 7 — Testes, segurança e deploy
+
+- [x] Revisão de segurança: RLS habilitado nas 16 tabelas, todas as rotas usam dependências de
+      auth (`require_organization`/`require_roles`), CORS restrito às origens configuradas,
+      nenhum segredo versionado no repositório, logs não capturam dados sensíveis.
+- [x] Corrigido: nomes de arquivo enviados ao Storage agora são sanitizados
+      (`app/repositories/documents_repo._sanitize_filename`) — remove segmentos de caminho
+      (`../`, `C:\...`) e caracteres inseguros antes de compor a chave do objeto.
+- [x] Adicionado controle de papéis (`app/core/security.require_roles`) e aplicado à troca de
+      plano (`POST /subscriptions/change-plan`, restrita a `owner`/`admin`) — a ação de billing
+      mais sensível hoje exposta.
+- [x] Testes de integração via API (`tests/test_integration_isolation.py`, `TestClient`):
+      rota protegida sem token → 401; isolamento multi-tenant real entre duas organizações
+      (lista e detalhe de empresa); limite de 10 MB no upload de documentos → 413; RBAC na troca
+      de plano → 403 para `viewer`, 200 para `owner`; `/health` público.
+- [x] Ver `docs/SECURITY.md` para o resumo completo da revisão (o que foi verificado, o que foi
+      corrigido e limitações conhecidas ainda não endereçadas).
+- [x] Suíte completa validada: 69 testes passando (`pytest -q` em `backend/`).
+
 ## Próximos dias (visão geral)
 
-- **Dia 7:** Testes automatizados, revisão de segurança/RLS, Dockerfile de produção e deploy.
+O MVP dos 7 dias está concluído. Melhorias futuras (fora do escopo do MVP) estão listadas em
+`docs/SECURITY.md` (limitações conhecidas) e incluem: rate limiting nos endpoints que chamam a
+IA, gateway de pagamento real (hoje `NullBillingProvider`), e substituição do frontend pelo
+visual aprovado no Claude Design.
 
 Trabalhe em tarefas pequenas; leia apenas os arquivos de `docs/` necessários para cada etapa.
