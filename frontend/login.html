@@ -3,32 +3,129 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="assets/config.js"></script>
 <script src="assets/app.js"></script>
+<style>
+  .login-shell { display: flex; min-height: 100vh; }
+  .brand-pane {
+    flex: 1;
+    padding: 56px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    border-right: 1px solid var(--border-soft);
+    position: relative;
+    overflow: hidden;
+  }
+  .brand-pane::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(180deg, transparent 0%, rgba(10, 14, 26, 0.4) 100%);
+  }
+  .mark-row { display: flex; align-items: center; gap: 12px; position: relative; z-index: 1; }
+  .mark-name { font-family: "Manrope", sans-serif; font-weight: 700; font-size: 15.5px; }
+  .mark-sub { font-size: 11px; color: var(--text-faint); margin-top: 1px; }
+  .pitch { position: relative; z-index: 1; max-width: 460px; }
+  .pitch h1 { font-size: 34px; line-height: 1.18; font-weight: 800; color: #fff; margin: 0; }
+  .pitch p { color: var(--text-muted); font-size: 15px; line-height: 1.6; margin-top: 16px; }
+  .bullets { display: flex; flex-direction: column; gap: 16px; margin-top: 36px; position: relative; z-index: 1; }
+  .bullet { display: flex; gap: 12px; align-items: flex-start; }
+  .bullet-ic {
+    width: 30px; height: 30px; border-radius: 9px; background: var(--surface-2);
+    border: 1px solid var(--border-soft); display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; color: var(--accent);
+  }
+  .bullet-title { font-size: 13.5px; font-weight: 600; color: var(--text-soft); }
+  .bullet-desc { font-size: 12.5px; color: var(--text-faint); margin-top: 2px; line-height: 1.5; }
+  .foot-note { position: relative; z-index: 1; font-size: 12px; color: var(--text-faint); }
+  .form-pane { width: 480px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; padding: 40px; }
+  .form-pane .card { border: none; box-shadow: none; padding: 0; background: transparent; max-width: 360px; }
+  .divider { display: flex; align-items: center; gap: 12px; margin: 22px 0; color: var(--text-faint); font-size: 11.5px; }
+  .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--border-soft); }
+  .fineprint { text-align: center; font-size: 12px; color: var(--text-faint); margin-top: 18px; }
+  @media (max-width: 900px) {
+    .brand-pane { display: none; }
+    .form-pane { width: 100%; }
+  }
+</style>
 
-<div class="center-screen">
-  <div class="card">
-    <h1>Pré-Validação Empresarial</h1>
-    <p class="subtitle">Revise o processo antes de protocolar.</p>
-
-    <div class="tabs">
-      <button id="tab-login" class="active" type="button">Entrar</button>
-      <button id="tab-signup" type="button">Criar conta</button>
+<div class="login-shell">
+  <div class="brand-pane">
+    <div class="mark-row">
+      <div class="mark">PV</div>
+      <div>
+        <div class="mark-name">Pré-Validação Empresarial</div>
+        <div class="mark-sub">Pernambuco · contadores &amp; escritórios</div>
+      </div>
     </div>
 
-    <form id="auth-form">
-      <label for="email">E-mail</label>
-      <input id="email" type="email" required autocomplete="email" />
+    <div class="pitch">
+      <h1>Revise o processo antes de protocolar.</h1>
+      <p>Um copiloto para contadores: identifica erros, divergências e documentos ausentes antes de qualquer abertura ou alteração empresarial seguir para a Junta Comercial.</p>
 
-      <label for="password">Senha</label>
-      <input id="password" type="password" required autocomplete="current-password" minlength="6" />
+      <div class="bullets">
+        <div class="bullet">
+          <div class="bullet-ic">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+          </div>
+          <div>
+            <div class="bullet-title">Motor de regras determinístico</div>
+            <div class="bullet-desc">Validações OK / Atenção / Erro sem depender de IA para decidir.</div>
+          </div>
+        </div>
+        <div class="bullet">
+          <div class="bullet-ic">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+          </div>
+          <div>
+            <div class="bullet-title">Memória empresarial</div>
+            <div class="bullet-desc">Histórico reaproveitado a cada novo processo, sem redigitar dados.</div>
+          </div>
+        </div>
+        <div class="bullet">
+          <div class="bullet-ic">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-4 4v-4H6a2 2 0 0 1-2-2z"/></svg>
+          </div>
+          <div>
+            <div class="bullet-title">IA sob demanda</div>
+            <div class="bullet-desc">Só interpreta e explica quando necessário — nunca decide sozinha.</div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-      <div id="signup-only" style="display: none">
-        <label for="organization-name">Nome do escritório</label>
-        <input id="organization-name" type="text" />
+    <div class="foot-note">Não substitui a Junta Comercial nem promete aprovação.</div>
+  </div>
+
+  <div class="form-pane">
+    <div class="card">
+      <h1>Entrar no escritório</h1>
+      <p class="subtitle">Acesse com o e-mail do seu escritório.</p>
+
+      <div class="tabs">
+        <button id="tab-login" class="active" type="button">Entrar</button>
+        <button id="tab-signup" type="button">Criar conta</button>
       </div>
 
-      <button class="primary" type="submit" id="submit-button">Entrar</button>
-      <p class="error-message" id="error-message"></p>
-    </form>
+      <form id="auth-form">
+        <label for="email">E-mail</label>
+        <input id="email" type="email" required autocomplete="email" placeholder="voce@escritorio.com.br" />
+
+        <label for="password">Senha</label>
+        <input id="password" type="password" required autocomplete="current-password" minlength="6" placeholder="••••••••" />
+
+        <div id="signup-only" style="display: none">
+          <label for="organization-name">Nome do escritório</label>
+          <input id="organization-name" type="text" />
+        </div>
+
+        <button class="primary" type="submit" id="submit-button">Entrar</button>
+        <p class="error-message" id="error-message"></p>
+      </form>
+
+      <div class="divider">contador ou escritório de contabilidade</div>
+      <p class="fineprint">Isto é uma pré-análise — não substitui a decisão da Junta Comercial.</p>
+    </div>
   </div>
 </div>
 
