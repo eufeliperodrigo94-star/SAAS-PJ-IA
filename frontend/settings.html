@@ -1,0 +1,272 @@
+<title>Configurações — SaaS Pré-Validação Empresarial</title>
+<link rel="stylesheet" href="assets/style.css" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="assets/config.js"></script>
+<script src="assets/app.js"></script>
+
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="mark">PV</div>
+      <div>
+        <div class="brand-name">Pré-Validação PE</div>
+        <div class="brand-sub">Copiloto societário</div>
+      </div>
+    </div>
+    <nav>
+      <a href="dashboard.html"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>Dashboard</a>
+      <a href="companies.html"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="9" height="18" rx="1"/><rect x="13" y="8" width="7" height="13" rx="1"/><line x1="7" y1="7" x2="7" y2="7.01"/><line x1="10" y1="7" x2="10" y2="7.01"/><line x1="7" y1="11" x2="7" y2="11.01"/><line x1="10" y1="11" x2="10" y2="11.01"/></svg>Empresas</a>
+      <a href="#" title="Abra um processo para enviar documentos"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M15 2v5h5"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>Documentos</a>
+      <a href="#" title="Abra um processo para usar o assistente"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-4 4v-4H6a2 2 0 0 1-2-2z"/></svg>Assistente IA</a>
+      <a href="assinatura.html"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>Assinatura</a>
+      <a href="suporte.html"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 3.5"/><line x1="12" y1="16.5" x2="12" y2="16.51"/></svg>Suporte</a>
+      <a href="settings.html" class="active"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Configurações</a>
+      <a href="admin.html" id="nav-admin" style="display: none"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/></svg>Admin</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <strong>Configurações</strong>
+      <button id="logout-button" type="button">Sair</button>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-head-left">
+          <div class="panel-ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="4" y="3" width="9" height="18" rx="1"/><rect x="13" y="8" width="7" height="13" rx="1"/></svg></div>
+          <h2>Perfil do escritório</h2>
+        </div>
+      </div>
+      <form id="organization-form" class="form-grid">
+        <div>
+          <label for="organization-name">Nome do escritório</label>
+          <input id="organization-name" required disabled />
+        </div>
+        <div>
+          <button class="secondary" type="submit" id="organization-save-button" style="display: none">Salvar</button>
+        </div>
+      </form>
+      <p class="error-message" id="organization-error"></p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-head-left">
+          <div class="panel-ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg></div>
+          <h2>Meu perfil</h2>
+        </div>
+      </div>
+      <form id="profile-form" class="form-grid">
+        <div>
+          <label for="profile-email">E-mail</label>
+          <input id="profile-email" disabled />
+        </div>
+        <div>
+          <label for="profile-full-name">Nome completo</label>
+          <input id="profile-full-name" placeholder="Seu nome" />
+        </div>
+        <div>
+          <button class="secondary" type="submit">Salvar</button>
+        </div>
+      </form>
+      <p class="error-message" id="profile-error"></p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-head-left">
+          <div class="panel-ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="9" cy="7" r="4"/><path d="M2 21v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2"/><circle cx="18" cy="8" r="3"/></svg></div>
+          <h2>Membros do escritório</h2>
+          <span class="panel-count" id="members-count">0</span>
+        </div>
+      </div>
+      <table>
+        <thead><tr><th>Nome</th><th>E-mail</th><th>Papel</th><th></th></tr></thead>
+        <tbody id="members-body"><tr><td colspan="4">Carregando…</td></tr></tbody>
+      </table>
+
+      <form id="invite-form" class="form-grid" style="margin-top: 18px">
+        <div>
+          <label for="invite-email">Convidar por e-mail</label>
+          <input id="invite-email" type="email" required placeholder="pessoa@escritorio.com.br" />
+        </div>
+        <div>
+          <label for="invite-role">Papel</label>
+          <select id="invite-role">
+            <option value="admin">Admin</option>
+            <option value="operator" selected>Operador</option>
+            <option value="viewer">Visualizador</option>
+          </select>
+        </div>
+        <div>
+          <button class="secondary" type="submit">Enviar convite</button>
+        </div>
+      </form>
+      <p class="error-message" id="invite-error"></p>
+      <p class="notice" style="margin-top: 12px">
+        A pessoa convidada recebe um e-mail do Supabase para definir a senha e acessar o escritório.
+      </p>
+    </div>
+  </main>
+</div>
+
+<script>
+  const ROLE_LABELS = { owner: "Owner", admin: "Admin", operator: "Operador", viewer: "Visualizador" };
+  let myRole = null;
+  let myUserId = null;
+
+  function escapeHtml(value) {
+    const div = document.createElement("div");
+    div.textContent = value ?? "";
+    return div.innerHTML;
+  }
+
+  function canManage() {
+    return myRole === "owner" || myRole === "admin";
+  }
+
+  async function loadOrganization() {
+    const org = await apiFetch("/organizations/me");
+    document.getElementById("organization-name").value = org.name;
+    if (canManage()) {
+      document.getElementById("organization-name").disabled = false;
+      document.getElementById("organization-save-button").style.display = "inline-block";
+    }
+  }
+
+  async function loadProfile() {
+    const me = await apiFetch("/auth/me");
+    myRole = me.role;
+    myUserId = me.id;
+    document.getElementById("profile-email").value = me.email || "";
+  }
+
+  function renderMembers(members) {
+    document.getElementById("members-count").textContent = members.length;
+    const manage = canManage();
+    document.getElementById("members-body").innerHTML = members
+      .map((m) => {
+        const isSelf = m.user_id === myUserId;
+        const roleCell = manage && !(isSelf && m.role === "owner")
+          ? `<select data-member-id="${m.user_id}" class="member-role-select">
+              ${Object.entries(ROLE_LABELS)
+                .map(([value, label]) => `<option value="${value}" ${m.role === value ? "selected" : ""}>${label}</option>`)
+                .join("")}
+            </select>`
+          : `<span class="badge">${ROLE_LABELS[m.role] || m.role}</span>`;
+        const removeCell = manage && !isSelf
+          ? `<button class="secondary" data-remove-member-id="${m.user_id}">Remover</button>`
+          : "";
+        return `
+        <tr>
+          <td>${escapeHtml(m.users.full_name) || "—"}${isSelf ? ' <span class="badge">Você</span>' : ""}</td>
+          <td>${escapeHtml(m.users.email) || "—"}</td>
+          <td>${roleCell}</td>
+          <td>${removeCell}</td>
+        </tr>`;
+      })
+      .join("");
+
+    document.querySelectorAll(".member-role-select").forEach((select) => {
+      select.addEventListener("change", async (event) => {
+        try {
+          await apiFetch(`/organizations/me/members/${select.dataset.memberId}`, {
+            method: "PATCH",
+            body: JSON.stringify({ role: event.target.value }),
+          });
+          await loadMembers();
+        } catch (err) {
+          alert(err.message || "Não foi possível alterar o papel deste membro.");
+          await loadMembers();
+        }
+      });
+    });
+
+    document.querySelectorAll("button[data-remove-member-id]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        if (!confirm("Remover este membro do escritório?")) return;
+        try {
+          await apiFetch(`/organizations/me/members/${button.dataset.removeMemberId}`, {
+            method: "DELETE",
+          });
+          await loadMembers();
+        } catch (err) {
+          alert(err.message || "Não foi possível remover este membro.");
+        }
+      });
+    });
+  }
+
+  async function loadMembers() {
+    const members = await apiFetch("/organizations/me/members");
+    renderMembers(members);
+    const me = members.find((m) => m.user_id === myUserId);
+    if (me) {
+      document.getElementById("profile-full-name").value = me.users.full_name || "";
+    }
+  }
+
+  (async () => {
+    await requireSession();
+    showAdminNavIfSuperAdmin();
+    document.getElementById("logout-button").addEventListener("click", signOut);
+
+    try {
+      await loadProfile();
+      await loadOrganization();
+      await loadMembers();
+      document.getElementById("invite-form").style.display = canManage() ? "grid" : "none";
+    } catch (err) {
+      document.getElementById("organization-error").textContent = err.message || "Não foi possível carregar as configurações.";
+    }
+
+    document.getElementById("organization-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const errorEl = document.getElementById("organization-error");
+      errorEl.textContent = "";
+      try {
+        await apiFetch("/organizations/me", {
+          method: "PATCH",
+          body: JSON.stringify({ name: document.getElementById("organization-name").value.trim() }),
+        });
+      } catch (err) {
+        errorEl.textContent = err.message || "Não foi possível salvar o nome do escritório.";
+      }
+    });
+
+    document.getElementById("profile-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const errorEl = document.getElementById("profile-error");
+      errorEl.textContent = "";
+      try {
+        await apiFetch("/auth/me/profile", {
+          method: "PATCH",
+          body: JSON.stringify({ full_name: document.getElementById("profile-full-name").value.trim() }),
+        });
+        await loadMembers();
+      } catch (err) {
+        errorEl.textContent = err.message || "Não foi possível salvar o perfil.";
+      }
+    });
+
+    document.getElementById("invite-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const errorEl = document.getElementById("invite-error");
+      errorEl.textContent = "";
+      try {
+        await apiFetch("/organizations/me/members", {
+          method: "POST",
+          body: JSON.stringify({
+            email: document.getElementById("invite-email").value.trim(),
+            role: document.getElementById("invite-role").value,
+          }),
+        });
+        event.target.reset();
+        await loadMembers();
+      } catch (err) {
+        errorEl.textContent = err.message || "Não foi possível enviar o convite.";
+      }
+    });
+  })();
+</script>

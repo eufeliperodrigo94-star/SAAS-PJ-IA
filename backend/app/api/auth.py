@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends
 
 from app.core.security import AuthenticatedUser, get_current_user
 from app.schemas.auth import MeResponse, OrganizationOut, RegisterOrganizationRequest
-from app.services.organization_service import register_organization
+from app.schemas.organization import ProfileUpdate
+from app.services.organization_service import register_organization, update_my_profile
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -16,6 +17,13 @@ def me(user: AuthenticatedUser = Depends(get_current_user)) -> MeResponse:
         role=user.role,
         is_super_admin=user.is_super_admin,
     )
+
+
+@router.patch("/me/profile")
+def update_profile(
+    payload: ProfileUpdate, user: AuthenticatedUser = Depends(get_current_user)
+) -> dict:
+    return update_my_profile(user, payload.full_name)
 
 
 @router.post("/register-organization", response_model=OrganizationOut)
