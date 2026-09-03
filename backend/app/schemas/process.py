@@ -8,6 +8,8 @@ PROCESS_TYPES = (
     "alteracao_capital",
     "alteracao_administrador",
     "alteracao_nome_objeto",
+    "alteracao_porte",
+    "transferencia_uf",
 )
 
 
