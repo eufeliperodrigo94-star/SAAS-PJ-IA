@@ -38,3 +38,15 @@ def list_validations(organization_id: str, process_id: str) -> list[dict]:
         .execute()
     )
     return result.data
+
+
+def count_by_result(organization_id: str, result_value: str) -> int:
+    result = (
+        get_supabase_admin()
+        .table("validations")
+        .select("id", count="exact")
+        .eq("organization_id", organization_id)
+        .eq("result", result_value)
+        .execute()
+    )
+    return result.count or 0

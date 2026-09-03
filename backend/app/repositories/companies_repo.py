@@ -13,6 +13,17 @@ def list_companies(organization_id: str) -> list[dict]:
     return result.data
 
 
+def count_companies(organization_id: str) -> int:
+    result = (
+        get_supabase_admin()
+        .table("companies")
+        .select("id", count="exact")
+        .eq("organization_id", organization_id)
+        .execute()
+    )
+    return result.count or 0
+
+
 def get_company(organization_id: str, company_id: str) -> dict | None:
     result = (
         get_supabase_admin()

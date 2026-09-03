@@ -6,3 +6,10 @@ def list_active_rules() -> list[dict]:
     o catálogo é pequeno no MVP e isso evita queries OR complexas no Supabase."""
     result = get_supabase_admin().table("rules").select("*").eq("ativo", True).execute()
     return result.data
+
+
+def get_rules_by_ids(rule_ids: list[str]) -> list[dict]:
+    if not rule_ids:
+        return []
+    result = get_supabase_admin().table("rules").select("*").in_("id", rule_ids).execute()
+    return result.data

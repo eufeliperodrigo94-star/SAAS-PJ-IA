@@ -12,7 +12,7 @@
       <a href="companies.html">Empresas</a>
       <a href="#" title="Abra um processo para enviar documentos">Documentos</a>
       <a href="#" title="Abra um processo para usar o assistente">Assistente IA</a>
-      <a href="#" title="Disponível no Dia 6">Assinatura</a>
+      <a href="assinatura.html">Assinatura</a>
     </nav>
   </aside>
 
@@ -52,9 +52,18 @@
       </div>
     </div>
 
+    <div class="panel" id="extra-info" style="display: none">
+      <p style="margin: 0 0 6px">
+        <strong>Plano atual:</strong> <span id="plan-name">—</span>
+      </p>
+      <p style="margin: 0; color: var(--text-muted)">
+        <strong>Consumo de IA (últimos 30 dias):</strong> <span id="ai-usage-text">—</span>
+      </p>
+    </div>
+
     <p class="notice">
-      MVP em construção (Dia 2 de 7): fundação, banco, autenticação, empresas (sócios, endereços,
-      CNAEs) e processos prontos. Memória, motor de regras, documentos e IA chegam nos próximos dias.
+      MVP em construção (Dia 6 de 7): fundação, empresas, memória, motor de regras, documentos,
+      IA, relatório e assinatura prontos. Testes finais e revisão de segurança chegam no Dia 7.
     </p>
   </main>
 </div>
@@ -80,6 +89,14 @@
       document.getElementById("stat-errors").textContent = summary.errors;
       document.getElementById("stat-ready").textContent = summary.ready_for_filing;
       document.getElementById("stat-grid").style.display = "grid";
+
+      document.getElementById("plan-name").textContent = summary.current_plan
+        ? summary.current_plan.name
+        : "nenhum plano ativo";
+      const usage = summary.ai_usage_last_30_days;
+      document.getElementById("ai-usage-text").textContent =
+        `${usage.calls} chamada(s) · ${usage.tokens_input + usage.tokens_output} tokens`;
+      document.getElementById("extra-info").style.display = "block";
     } catch (err) {
       document.getElementById("org-name").textContent = "Erro ao carregar dados";
       console.error(err);

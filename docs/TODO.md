@@ -7,7 +7,7 @@
 | 3 | Memória empresarial e histórico | ✅ concluído |
 | 4 | Motor de regras e pré-validação | ✅ concluído |
 | 5 | Documentos + Claude + cruzamento | ✅ concluído |
-| 6 | Dashboard + relatório + assinatura | ⬜ |
+| 6 | Dashboard + relatório + assinatura | ✅ concluído |
 | 7 | Testes + segurança + deploy | ⬜ |
 
 ## Dia 1 — Fundação
@@ -78,9 +78,24 @@
 - [ ] Validar ponta a ponta com `ANTHROPIC_API_KEY` real e um projeto Supabase real (upload +
       extração + assistente).
 
+## Dia 6 — Dashboard, relatório e assinatura
+
+- [x] `app/billing/provider.py`: interface `BillingProvider` + `NullBillingProvider` (sem
+      gateway real ainda — trocar de plano é direto, sem cobrança).
+- [x] `app/services/billing_service.py`: assinatura padrão (Starter, trialing) criada ao
+      registrar organização; `check_company_limit` bloqueia cadastro de empresa acima do plano.
+- [x] Rotas `GET /plans`, `GET /subscriptions`, `POST /subscriptions/change-plan`.
+- [x] `GET /dashboard/summary` com números reais: processos por status, validações por
+      resultado, consumo de IA (últimos 30 dias) e plano atual.
+- [x] `GET /processes/{id}/report`: relatório de pré-validação (resumo, erros, alertas, itens
+      OK, documentos enviados, regras aplicadas com versão, ações recomendadas, aviso de
+      pré-análise) a partir das `validations` já persistidas.
+- [x] Frontend: `assinatura.html` (plano atual + troca de plano), `dashboard.html` com números
+      reais + plano + consumo de IA, seção de relatório em `process-detail.html`.
+- [ ] Validar troca de plano e bloqueio de limite com um projeto Supabase real.
+
 ## Próximos dias (visão geral)
 
-- **Dia 6:** Dashboard completo, relatório de pré-validação, planos e billing.
 - **Dia 7:** Testes automatizados, revisão de segurança/RLS, Dockerfile de produção e deploy.
 
 Trabalhe em tarefas pequenas; leia apenas os arquivos de `docs/` necessários para cada etapa.

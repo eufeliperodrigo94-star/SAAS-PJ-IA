@@ -60,8 +60,19 @@ atualiza `processes.status` (`pendente_correcao` / `pronto_para_protocolo` / `em
 no Supabase Storage (caminho `"{organization_id}/{process_id}/{arquivo}"`), com policies de
 `storage.objects` que reusam `is_org_member()` sobre o primeiro segmento do caminho.
 
+## Dia 6 — dashboard, relatório e assinatura
+
+Sem migration nova: `plans` e `subscriptions` já existiam desde o Dia 1. `app/billing/` ganha a
+interface `BillingProvider` (ver `PROJECT.md`) e `app/services/billing_service.py` passa a criar
+automaticamente uma assinatura `trialing` no plano Starter ao registrar uma organização
+(`ensure_default_subscription`), além de bloquear a criação de empresas acima do
+`plans.max_companies` do plano ativo. `GET /dashboard/summary` agora calcula números reais
+(processos por status, validações por resultado, consumo de IA nos últimos 30 dias, plano
+atual) e `GET /processes/{id}/report` monta o relatório de pré-validação a partir das
+`validations` já persistidas — sem rodar regras novas nem chamar IA.
+
 Tabelas adicionais previstas no escopo completo (conhecimento/RAG, integrações, notificações)
-entram no Dia 6, conforme `TODO.md`, para manter cada migration pequena e revisável.
+entram no Dia 7, conforme `TODO.md`, para manter cada migration pequena e revisável.
 
 ## RLS
 

@@ -1,5 +1,6 @@
 from app.core.exceptions import DomainError
 from app.repositories import companies_repo, company_events_repo
+from app.services import billing_service
 
 
 class CompanyNotFoundError(DomainError):
@@ -19,6 +20,7 @@ def get_company_or_404(organization_id: str, company_id: str) -> dict:
 
 
 def create_company(organization_id: str, data: dict, created_by: str | None = None) -> dict:
+    billing_service.check_company_limit(organization_id)
     company = companies_repo.create_company(organization_id, data)
     company_events_repo.create_event(
         organization_id,

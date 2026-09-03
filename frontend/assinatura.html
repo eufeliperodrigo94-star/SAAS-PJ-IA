@@ -1,0 +1,117 @@
+<title>Assinatura — SaaS Pré-Validação Empresarial</title>
+<link rel="stylesheet" href="assets/style.css" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="assets/config.js"></script>
+<script src="assets/app.js"></script>
+
+<div class="app-shell">
+  <aside class="sidebar">
+    <h2>Pré-Validação PE</h2>
+    <nav>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="companies.html">Empresas</a>
+      <a href="#" title="Abra um processo para enviar documentos">Documentos</a>
+      <a href="#" title="Abra um processo para usar o assistente">Assistente IA</a>
+      <a href="assinatura.html" class="active">Assinatura</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <strong>Assinatura</strong>
+      <button id="logout-button" type="button">Sair</button>
+    </div>
+
+    <div class="panel">
+      <h2>Plano atual</h2>
+      <div id="current-plan-content">Carregando…</div>
+    </div>
+
+    <div class="panel">
+      <h2>Planos disponíveis</h2>
+      <p class="notice" style="margin-bottom: 16px">
+        Trocar de plano é imediato nesta demonstração — nenhum gateway de pagamento está
+        conectado ainda (ver <code>app/billing/provider.py</code>).
+      </p>
+      <div id="plans-grid" class="stat-grid">Carregando…</div>
+    </div>
+  </main>
+</div>
+
+<script>
+  function escapeHtml(value) {
+    const div = document.createElement("div");
+    div.textContent = value ?? "";
+    return div.innerHTML;
+  }
+
+  function formatPrice(cents) {
+    return cents == null ? "Sob consulta" : "R$ " + (cents / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+  }
+
+  let currentPlanCode = null;
+
+  async function loadCurrentPlan() {
+    const subscription = await apiFetch("/subscriptions");
+    const el = document.getElementById("current-plan-content");
+    if (!subscription) {
+      el.innerHTML = '<p class="notice">Nenhuma assinatura encontrada.</p>';
+      return;
+    }
+    currentPlanCode = subscription.plan.code;
+    el.innerHTML = `
+      <p style="margin: 0 0 6px"><strong>${escapeHtml(subscription.plan.name)}</strong> <span class="badge status-em_validacao">${escapeHtml(subscription.status)}</span></p>
+      <p style="margin: 0; color: var(--text-muted)">
+        Limite: ${subscription.plan.max_companies != null ? subscription.plan.max_companies + " empresas" : "ilimitado"} ·
+        ${formatPrice(subscription.plan.price_cents)}/mês
+      </p>`;
+  }
+
+  async function loadPlans() {
+    const plans = await apiFetch("/plans");
+    const grid = document.getElementById("plans-grid");
+    grid.innerHTML = plans
+      .map(
+        (p) => `
+      <div class="stat-card">
+        <div class="label">${escapeHtml(p.name)}</div>
+        <div class="value" style="font-size: 1.3rem">${formatPrice(p.price_cents)}</div>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin: 8px 0 16px">
+          ${p.max_companies != null ? "Até " + p.max_companies + " empresas" : "Empresas ilimitadas"}
+        </p>
+        <button class="secondary" style="width: 100%" data-plan-code="${p.code}" ${p.code === currentPlanCode ? "disabled" : ""}>
+          ${p.code === currentPlanCode ? "Plano atual" : "Selecionar"}
+        </button>
+      </div>`
+      )
+      .join("");
+
+    grid.querySelectorAll("button[data-plan-code]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        button.disabled = true;
+        try {
+          await apiFetch("/subscriptions/change-plan", {
+            method: "POST",
+            body: JSON.stringify({ plan_code: button.dataset.planCode }),
+          });
+          await loadCurrentPlan();
+          await loadPlans();
+        } catch (err) {
+          alert(err.message || "Não foi possível trocar de plano.");
+          button.disabled = false;
+        }
+      });
+    });
+  }
+
+  (async () => {
+    await requireSession();
+    document.getElementById("logout-button").addEventListener("click", signOut);
+    try {
+      await loadCurrentPlan();
+      await loadPlans();
+    } catch (err) {
+      document.getElementById("current-plan-content").innerHTML = `<p class="error-message">${escapeHtml(err.message)}</p>`;
+    }
+  })();
+</script>

@@ -1,6 +1,7 @@
 import pytest
 
 from app.services import company_service
+from app.services.billing_service import CompanyLimitReachedError
 from app.services.company_service import CompanyNotFoundError
 
 
@@ -35,3 +36,28 @@ def test_add_partner_requires_existing_company(monkeypatch):
 
     with pytest.raises(CompanyNotFoundError):
         company_service.add_partner("org-1", "missing-company", {"nome": "Maria"})
+
+
+def test_create_company_blocked_when_plan_limit_reached(monkeypatch):
+    def fake_check_limit(org_id):
+        raise CompanyLimitReachedError(10)
+
+    monkeypatch.setattr("app.services.billing_service.check_company_limit", fake_check_limit)
+
+    with pytest.raises(CompanyLimitReachedError):
+        company_service.create_company("org-1", {"razao_social": "Acme LTDA"})
+
+
+def test_create_company_succeeds_within_limit(monkeypatch):
+    monkeypatch.setattr("app.services.billing_service.check_company_limit", lambda org_id: None)
+    monkeypatch.setattr(
+        "app.repositories.companies_repo.create_company",
+        lambda org_id, data: {"id": "company-1", "razao_social": data["razao_social"]},
+    )
+    monkeypatch.setattr(
+        "app.repositories.company_events_repo.create_event", lambda *a, **k: {"id": "event-1"}
+    )
+
+    company = company_service.create_company("org-1", {"razao_social": "Acme LTDA"})
+
+    assert company["id"] == "company-1"
