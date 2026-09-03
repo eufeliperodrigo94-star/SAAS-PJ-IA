@@ -3,6 +3,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="assets/config.js"></script>
 <script src="assets/app.js"></script>
+<script src="assets/jucepe-help.js"></script>
 
 <div class="app-shell">
   <aside class="sidebar">
@@ -27,6 +28,15 @@
     <a class="back-link" id="back-link" href="companies.html">← Voltar para a empresa</a>
 
     <div class="panel" id="process-panel">Carregando…</div>
+
+    <details class="panel">
+      <summary style="cursor: pointer; font-weight: 700">Como protocolar na JUCEPE (guia oficial)</summary>
+      <p class="notice" style="margin: 12px 0 16px">
+        Resumo dos manuais oficiais "Passo a Passo" da JUCEPE — só orientação de uso do portal
+        externo da Junta Comercial; o sistema não protocola nada automaticamente.
+      </p>
+      <div id="jucepe-help-content">Carregando…</div>
+    </details>
 
     <div class="panel">
       <div class="topbar" style="margin-bottom: 16px">
@@ -127,6 +137,7 @@
         Status: <span class="badge status-${process.status}">${escapeHtml(process.status)}</span>
       </p>
       ${process.description ? `<p style="margin: 0">${escapeHtml(process.description)}</p>` : ""}`;
+    renderJucepeHelp(process.type);
   }
 
   function renderValidations(validations) {
