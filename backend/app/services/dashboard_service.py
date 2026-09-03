@@ -7,6 +7,16 @@ IN_PROGRESS_STATUSES = ["rascunho", "em_validacao"]
 PENDING_CORRECTION_STATUSES = ["pendente_correcao"]
 READY_STATUSES = ["pronto_para_protocolo"]
 
+ALL_PROCESS_STATUSES = [
+    "rascunho",
+    "em_validacao",
+    "pendente_correcao",
+    "pronto_para_protocolo",
+    "protocolado",
+    "arquivado",
+]
+ALL_VALIDATION_RESULTS = ["ok", "atencao", "erro"]
+
 
 def get_summary(organization_id: str) -> dict:
     subscription = billing_service.get_current_subscription(organization_id)
@@ -26,4 +36,12 @@ def get_summary(organization_id: str) -> dict:
         "ready_for_filing": processes_repo.count_by_status(organization_id, READY_STATUSES),
         "ai_usage_last_30_days": ai_usage_repo.summary_since(organization_id, since),
         "current_plan": subscription["plan"] if subscription else None,
+        "processes_by_status": {
+            status: processes_repo.count_by_status(organization_id, [status])
+            for status in ALL_PROCESS_STATUSES
+        },
+        "validations_by_result": {
+            result: validations_repo.count_by_result(organization_id, result)
+            for result in ALL_VALIDATION_RESULTS
+        },
     }
