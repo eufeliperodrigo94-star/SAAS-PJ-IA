@@ -45,8 +45,13 @@ Papéis: `owner`, `admin`, `operator`, `viewer`.
 ## Autenticação
 
 - Supabase Auth emite o JWT (login/signup feitos no frontend via `supabase-js`).
-- Backend valida o JWT (HS256, `SUPABASE_JWT_SECRET`) em cada request e resolve
-  `user_id` → organizações e papel via `organization_users`.
+- Backend valida o JWT em cada request (`app/core/security.py`) e resolve
+  `user_id` → organizações e papel via `organization_users`. Suporta os dois esquemas de
+  assinatura do Supabase: projetos legados usam HS256 com `SUPABASE_JWT_SECRET` (segredo
+  compartilhado); projetos criados a partir de 2024 assinam com uma chave assimétrica
+  (ES256/RS256) publicada em `{SUPABASE_URL}/auth/v1/.well-known/jwks.json` — o backend detecta
+  o algoritmo pelo header do token e verifica contra a JWKS pública nesse caso, com cache e um
+  refresh automático se o `kid` não for encontrado (rotação de chave).
 - Registro de escritório: `POST /auth/register-organization` cria `organizations` +
   `organization_users` (papel `owner`) para o usuário Supabase já autenticado.
 

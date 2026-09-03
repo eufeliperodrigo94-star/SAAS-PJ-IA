@@ -1,0 +1,284 @@
+<title>Processo — SaaS Pré-Validação Empresarial</title>
+<link rel="stylesheet" href="assets/style.css" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="assets/config.js"></script>
+<script src="assets/app.js"></script>
+
+<div class="app-shell">
+  <aside class="sidebar">
+    <h2>Pré-Validação PE</h2>
+    <nav>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="companies.html" class="active">Empresas</a>
+      <a href="#documents-body">Documentos</a>
+      <a href="#assistant-form">Assistente IA</a>
+      <a href="#" title="Disponível no Dia 6">Assinatura</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <strong>Processo</strong>
+      <button id="logout-button" type="button">Sair</button>
+    </div>
+
+    <a class="back-link" id="back-link" href="companies.html">← Voltar para a empresa</a>
+
+    <div class="panel" id="process-panel">Carregando…</div>
+
+    <div class="panel">
+      <div class="topbar" style="margin-bottom: 16px">
+        <h2 style="margin: 0">Resultado da pré-validação</h2>
+        <button class="secondary" id="validate-button" type="button">Executar pré-validação</button>
+      </div>
+      <p class="notice" style="margin-bottom: 16px">
+        As regras rodam de forma determinística (sem IA) contra os dados já cadastrados da
+        empresa. Isto é uma pré-análise — não substitui a decisão do órgão oficial.
+      </p>
+      <div id="validations-list">
+        <p class="notice">Nenhuma pré-validação executada ainda.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Documentos</h2>
+      <form id="upload-form" class="form-grid" style="margin-bottom: 20px">
+        <div><label>Arquivo</label><input id="upload-file" type="file" required /></div>
+        <div><button class="secondary" type="submit">Enviar documento</button></div>
+      </form>
+      <p class="error-message" id="upload-error"></p>
+      <table>
+        <thead><tr><th>Arquivo</th><th>Enviado em</th><th>Extração</th></tr></thead>
+        <tbody id="documents-body"><tr><td colspan="3">Carregando…</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <h2>Extrair e cruzar dados de um documento</h2>
+      <p class="notice" style="margin-bottom: 16px">
+        Cole o texto do documento (ex.: contrato social) para a IA extrair os dados e compará-los
+        com o cadastro da empresa. A IA nunca decide sozinha: o resultado é uma sugestão para
+        revisão — quem confirma é você.
+      </p>
+      <form id="extract-form">
+        <label for="extract-document">Documento</label>
+        <select id="extract-document"></select>
+        <label for="extract-text">Texto do documento</label>
+        <textarea id="extract-text" rows="6" style="width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface-alt); color: var(--text); font: inherit"></textarea>
+        <button class="primary" type="submit" style="width: auto; margin-top: 12px">Extrair e cruzar dados</button>
+      </form>
+      <p class="error-message" id="extract-error"></p>
+      <div id="extract-result"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Assistente IA</h2>
+      <p class="notice" style="margin-bottom: 16px">
+        Descreva em linguagem natural o que deseja fazer neste processo. A IA transforma isso em
+        uma proposta estruturada — nada é alterado automaticamente, você confirma manualmente nos
+        cadastros de sócios/endereço/CNAE.
+      </p>
+      <form id="assistant-form">
+        <textarea id="assistant-message" rows="3" style="width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface-alt); color: var(--text); font: inherit" placeholder="Ex.: Quero retirar João e colocar Maria com 30%."></textarea>
+        <button class="primary" type="submit" style="width: auto; margin-top: 12px">Interpretar solicitação</button>
+      </form>
+      <p class="error-message" id="assistant-error"></p>
+      <div id="assistant-result"></div>
+    </div>
+  </main>
+</div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const processId = params.get("id");
+
+  function escapeHtml(value) {
+    const div = document.createElement("div");
+    div.textContent = value ?? "";
+    return div.innerHTML;
+  }
+
+  function formatDateTime(iso) {
+    return iso ? new Date(iso).toLocaleString("pt-BR") : "—";
+  }
+
+  const RESULT_LABELS = { ok: "OK", atencao: "Atenção", erro: "Erro" };
+
+  let currentProcess = null;
+
+  function renderProcess(process) {
+    currentProcess = process;
+    document.getElementById("back-link").href = `company.html?id=${process.company_id}`;
+    document.getElementById("process-panel").innerHTML = `
+      <h2>${escapeHtml(process.type)}</h2>
+      <p style="color: var(--text-muted); margin: 0 0 8px">
+        Status: <span class="badge status-${process.status}">${escapeHtml(process.status)}</span>
+      </p>
+      ${process.description ? `<p style="margin: 0">${escapeHtml(process.description)}</p>` : ""}`;
+  }
+
+  function renderValidations(validations) {
+    const container = document.getElementById("validations-list");
+    if (!validations.length) {
+      container.innerHTML = '<p class="notice">Nenhuma pré-validação executada ainda.</p>';
+      return;
+    }
+
+    const rows = validations
+      .map(
+        (v) => `
+      <div class="panel result-row result-${v.result}" style="margin-bottom: 12px; padding: 16px">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px">
+          <span class="badge result-${v.result}">${RESULT_LABELS[v.result] || escapeHtml(v.result)}</span>
+        </div>
+        <p style="margin: 0 0 4px">${escapeHtml(v.message)}</p>
+        ${v.suggested_action ? `<p style="margin: 0; color: var(--text-muted)">Ação sugerida: ${escapeHtml(v.suggested_action)}</p>` : ""}
+      </div>`
+      )
+      .join("");
+    container.innerHTML = rows;
+  }
+
+  async function loadProcess() {
+    const process = await apiFetch(`/processes/${processId}`);
+    renderProcess(process);
+  }
+
+  async function loadValidations() {
+    const validations = await apiFetch(`/processes/${processId}/validations`);
+    renderValidations(validations);
+  }
+
+  function formatDateTime2(iso) {
+    return iso ? new Date(iso).toLocaleString("pt-BR") : "—";
+  }
+
+  async function loadDocuments() {
+    const documents = await apiFetch(`/processes/${processId}/documents`);
+    const body = document.getElementById("documents-body");
+    body.innerHTML = documents.length
+      ? documents
+          .map(
+            (d) => `<tr><td>${escapeHtml(d.file_name)}</td><td>${formatDateTime2(d.created_at)}</td><td>${d.extracted_at ? "Analisado" : "Pendente"}</td></tr>`
+          )
+          .join("")
+      : '<tr><td colspan="3">Nenhum documento enviado.</td></tr>';
+
+    const select = document.getElementById("extract-document");
+    select.innerHTML = documents.length
+      ? documents.map((d) => `<option value="${d.id}">${escapeHtml(d.file_name)}</option>`).join("")
+      : '<option value="">Envie um documento primeiro</option>';
+  }
+
+  document.getElementById("upload-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const errorEl = document.getElementById("upload-error");
+    errorEl.textContent = "";
+    const fileInput = document.getElementById("upload-file");
+    const file = fileInput.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("process_id", processId);
+    formData.append("file", file);
+
+    try {
+      await apiFetch("/documents/upload", { method: "POST", body: formData });
+      event.target.reset();
+      await loadDocuments();
+    } catch (err) {
+      errorEl.textContent = err.message || "Não foi possível enviar o documento.";
+    }
+  });
+
+  document.getElementById("extract-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const errorEl = document.getElementById("extract-error");
+    const resultEl = document.getElementById("extract-result");
+    errorEl.textContent = "";
+    resultEl.innerHTML = "";
+
+    const documentId = document.getElementById("extract-document").value;
+    const text = document.getElementById("extract-text").value.trim();
+    if (!documentId || !text) {
+      errorEl.textContent = "Selecione um documento e cole o texto para analisar.";
+      return;
+    }
+
+    try {
+      const result = await apiFetch(`/documents/${documentId}/extract`, {
+        method: "POST",
+        body: JSON.stringify({ text }),
+      });
+      const rows = result.divergences.length
+        ? result.divergences
+            .map(
+              (d) => `<div class="notice" style="margin-bottom: 8px; ${d.divergente ? "border-color: var(--erro)" : ""}">
+                <strong>${escapeHtml(d.campo)}</strong> — cadastro: ${escapeHtml(d.cadastro)} · documento: ${escapeHtml(d.documento)}
+                ${d.divergente ? ' <span class="badge result-erro">Divergente</span>' : ' <span class="badge result-ok">OK</span>'}
+              </div>`
+            )
+            .join("")
+        : '<p class="notice">Nenhum campo comparável foi extraído do texto.</p>';
+      resultEl.innerHTML = rows;
+      await loadDocuments();
+    } catch (err) {
+      errorEl.textContent = err.message || "Não foi possível extrair os dados do documento.";
+    }
+  });
+
+  document.getElementById("assistant-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const errorEl = document.getElementById("assistant-error");
+    const resultEl = document.getElementById("assistant-result");
+    errorEl.textContent = "";
+    resultEl.innerHTML = "";
+
+    const message = document.getElementById("assistant-message").value.trim();
+    if (!message) return;
+
+    try {
+      const result = await apiFetch("/assistant/message", {
+        method: "POST",
+        body: JSON.stringify({ process_id: processId, message }),
+      });
+      resultEl.innerHTML = `
+        <p class="notice">Proposta gerada pela IA — confirme e aplique manualmente nos cadastros:</p>
+        <pre style="background: var(--surface-alt); padding: 12px; border-radius: 8px; overflow-x: auto">${escapeHtml(JSON.stringify(result.proposal, null, 2))}</pre>`;
+    } catch (err) {
+      errorEl.textContent = err.message || "Não foi possível interpretar a solicitação.";
+    }
+  });
+
+  document.getElementById("validate-button").addEventListener("click", async () => {
+    const button = document.getElementById("validate-button");
+    button.disabled = true;
+    button.textContent = "Executando…";
+    try {
+      const result = await apiFetch(`/processes/${processId}/validate`, { method: "POST" });
+      renderProcess(result.process);
+      renderValidations(result.validations);
+    } catch (err) {
+      alert(err.message || "Não foi possível executar a pré-validação.");
+    } finally {
+      button.disabled = false;
+      button.textContent = "Executar pré-validação";
+    }
+  });
+
+  (async () => {
+    if (!processId) {
+      window.location.href = "companies.html";
+      return;
+    }
+    await requireSession();
+    document.getElementById("logout-button").addEventListener("click", signOut);
+    try {
+      await loadProcess();
+      await loadValidations();
+      await loadDocuments();
+    } catch (err) {
+      document.getElementById("process-panel").innerHTML = `<p class="error-message">${escapeHtml(err.message)}</p>`;
+    }
+  })();
+</script>

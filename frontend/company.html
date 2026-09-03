@@ -1,0 +1,293 @@
+<title>Detalhe da Empresa — SaaS Pré-Validação Empresarial</title>
+<link rel="stylesheet" href="assets/style.css" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="assets/config.js"></script>
+<script src="assets/app.js"></script>
+
+<div class="app-shell">
+  <aside class="sidebar">
+    <h2>Pré-Validação PE</h2>
+    <nav>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="companies.html" class="active">Empresas</a>
+      <a href="#" title="Abra um processo para enviar documentos">Documentos</a>
+      <a href="#" title="Abra um processo para usar o assistente">Assistente IA</a>
+      <a href="#" title="Disponível no Dia 6">Assinatura</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <strong id="company-title">Carregando…</strong>
+      <button id="logout-button" type="button">Sair</button>
+    </div>
+
+    <a class="back-link" href="companies.html">← Minhas Empresas</a>
+
+    <div class="panel" id="company-panel"></div>
+
+    <div class="panel">
+      <h2>Sócios</h2>
+      <table>
+        <thead><tr><th>Nome</th><th>CPF/CNPJ</th><th>Qualificação</th><th>% Capital</th></tr></thead>
+        <tbody id="partners-body"><tr><td colspan="4">Carregando…</td></tr></tbody>
+      </table>
+      <h3>Adicionar sócio</h3>
+      <form id="partner-form" class="form-grid">
+        <div><label>Nome *</label><input id="partner-nome" required /></div>
+        <div><label>CPF/CNPJ</label><input id="partner-cpf" /></div>
+        <div><label>Qualificação</label><input id="partner-qualificacao" placeholder="Ex.: Administrador" /></div>
+        <div><label>% Capital</label><input id="partner-percentual" type="number" step="0.01" min="0" max="100" /></div>
+        <div><button class="secondary" type="submit">Adicionar</button></div>
+      </form>
+      <p class="error-message" id="partner-error"></p>
+    </div>
+
+    <div class="panel">
+      <h2>Endereços</h2>
+      <table>
+        <thead><tr><th>Tipo</th><th>Logradouro</th><th>Município/UF</th><th>CEP</th></tr></thead>
+        <tbody id="addresses-body"><tr><td colspan="4">Carregando…</td></tr></tbody>
+      </table>
+      <h3>Adicionar endereço</h3>
+      <form id="address-form" class="form-grid">
+        <div><label>Tipo</label>
+          <select id="address-tipo"><option value="sede">Sede</option><option value="filial">Filial</option></select>
+        </div>
+        <div><label>Logradouro</label><input id="address-logradouro" /></div>
+        <div><label>Número</label><input id="address-numero" /></div>
+        <div><label>Bairro</label><input id="address-bairro" /></div>
+        <div><label>Município</label><input id="address-municipio" /></div>
+        <div><label>UF</label><input id="address-uf" maxlength="2" value="PE" /></div>
+        <div><label>CEP</label><input id="address-cep" /></div>
+        <div><button class="secondary" type="submit">Adicionar</button></div>
+      </form>
+      <p class="error-message" id="address-error"></p>
+    </div>
+
+    <div class="panel">
+      <h2>CNAEs</h2>
+      <table>
+        <thead><tr><th>Código</th><th>Descrição</th><th>Principal</th></tr></thead>
+        <tbody id="activities-body"><tr><td colspan="3">Carregando…</td></tr></tbody>
+      </table>
+      <h3>Adicionar CNAE</h3>
+      <form id="activity-form" class="form-grid">
+        <div><label>Código *</label><input id="activity-code" required placeholder="0000-0/00" /></div>
+        <div><label>Descrição</label><input id="activity-description" /></div>
+        <div><label><input id="activity-primary" type="checkbox" style="width: auto" /> Principal</label></div>
+        <div><button class="secondary" type="submit">Adicionar</button></div>
+      </form>
+      <p class="error-message" id="activity-error"></p>
+    </div>
+
+    <div class="panel">
+      <div class="topbar" style="margin-bottom: 16px">
+        <h2 style="margin: 0">Processos</h2>
+        <button class="secondary" id="new-process-button" type="button">Novo processo</button>
+      </div>
+      <table>
+        <thead><tr><th>Tipo</th><th>Status</th><th>Criado em</th></tr></thead>
+        <tbody id="processes-body"><tr><td colspan="3">Carregando…</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <h2>Timeline da empresa</h2>
+      <p class="notice" style="margin-bottom: 16px">
+        Memória empresarial: histórico de eventos guardado no banco de dados, reutilizado
+        automaticamente em novos processos — nunca reenviado à IA por completo.
+      </p>
+      <table>
+        <thead><tr><th>Quando</th><th>Evento</th><th>Descrição</th></tr></thead>
+        <tbody id="timeline-body"><tr><td colspan="3">Carregando…</td></tr></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const companyId = params.get("id");
+
+  function escapeHtml(value) {
+    const div = document.createElement("div");
+    div.textContent = value ?? "";
+    return div.innerHTML;
+  }
+
+  function formatDate(iso) {
+    return iso ? new Date(iso).toLocaleDateString("pt-BR") : "—";
+  }
+
+  async function loadCompany() {
+    const company = await apiFetch(`/companies/${companyId}`);
+    document.getElementById("company-title").textContent = company.razao_social;
+    document.getElementById("company-panel").innerHTML = `
+      <h2>${escapeHtml(company.razao_social)}</h2>
+      <p style="color: var(--text-muted); margin: 0 0 4px">
+        ${company.nome_fantasia ? escapeHtml(company.nome_fantasia) + " · " : ""}
+        CNPJ: ${escapeHtml(company.cnpj) || "não informado"}
+      </p>
+      <p style="color: var(--text-muted); margin: 0">
+        ${escapeHtml(company.natureza_juridica) || "Natureza jurídica não informada"} ·
+        ${escapeHtml(company.municipio) || "—"}${company.uf ? "/" + escapeHtml(company.uf) : ""} ·
+        Capital social: ${company.capital_social != null ? "R$ " + Number(company.capital_social).toLocaleString("pt-BR") : "não informado"}
+      </p>`;
+  }
+
+  async function loadPartners() {
+    const partners = await apiFetch(`/companies/${companyId}/partners`);
+    const body = document.getElementById("partners-body");
+    body.innerHTML = partners.length
+      ? partners
+          .map(
+            (p) => `<tr><td>${escapeHtml(p.nome)}</td><td>${escapeHtml(p.cpf_cnpj) || "—"}</td><td>${escapeHtml(p.qualificacao) || "—"}</td><td>${p.percentual_capital ?? "—"}</td></tr>`
+          )
+          .join("")
+      : '<tr><td colspan="4">Nenhum sócio cadastrado.</td></tr>';
+  }
+
+  async function loadAddresses() {
+    const addresses = await apiFetch(`/companies/${companyId}/addresses`);
+    const body = document.getElementById("addresses-body");
+    body.innerHTML = addresses.length
+      ? addresses
+          .map(
+            (a) => `<tr><td>${escapeHtml(a.tipo)}</td><td>${escapeHtml(a.logradouro) || "—"} ${escapeHtml(a.numero) || ""}</td><td>${escapeHtml(a.municipio) || "—"}${a.uf ? "/" + escapeHtml(a.uf) : ""}</td><td>${escapeHtml(a.cep) || "—"}</td></tr>`
+          )
+          .join("")
+      : '<tr><td colspan="4">Nenhum endereço cadastrado.</td></tr>';
+  }
+
+  async function loadActivities() {
+    const activities = await apiFetch(`/companies/${companyId}/activities`);
+    const body = document.getElementById("activities-body");
+    body.innerHTML = activities.length
+      ? activities
+          .map(
+            (a) => `<tr><td>${escapeHtml(a.cnae_code)}</td><td>${escapeHtml(a.description) || "—"}</td><td>${a.is_primary ? "Sim" : "Não"}</td></tr>`
+          )
+          .join("")
+      : '<tr><td colspan="3">Nenhum CNAE cadastrado.</td></tr>';
+  }
+
+  async function loadProcesses() {
+    const processes = await apiFetch(`/processes?company_id=${companyId}`);
+    const body = document.getElementById("processes-body");
+    body.innerHTML = processes.length
+      ? processes
+          .map(
+            (p) => `<tr class="clickable" onclick="window.location.href='process-detail.html?id=${p.id}'"><td>${escapeHtml(p.type)}</td><td><span class="badge status-${p.status}">${escapeHtml(p.status)}</span></td><td>${formatDate(p.created_at)}</td></tr>`
+          )
+          .join("")
+      : '<tr><td colspan="3">Nenhum processo iniciado.</td></tr>';
+  }
+
+  function formatDateTime(iso) {
+    return iso ? new Date(iso).toLocaleString("pt-BR") : "—";
+  }
+
+  async function loadTimeline() {
+    const events = await apiFetch(`/companies/${companyId}/timeline`);
+    const body = document.getElementById("timeline-body");
+    body.innerHTML = events.length
+      ? events
+          .map(
+            (e) => `<tr><td>${formatDateTime(e.created_at)}</td><td><span class="badge">${escapeHtml(e.event_type)}</span></td><td>${escapeHtml(e.description)}</td></tr>`
+          )
+          .join("")
+      : '<tr><td colspan="3">Nenhum evento registrado ainda.</td></tr>';
+  }
+
+  document.getElementById("partner-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const errorEl = document.getElementById("partner-error");
+    errorEl.textContent = "";
+    const percentual = document.getElementById("partner-percentual").value;
+    try {
+      await apiFetch(`/companies/${companyId}/partners`, {
+        method: "POST",
+        body: JSON.stringify({
+          nome: document.getElementById("partner-nome").value.trim(),
+          cpf_cnpj: document.getElementById("partner-cpf").value.trim() || null,
+          qualificacao: document.getElementById("partner-qualificacao").value.trim() || null,
+          percentual_capital: percentual ? parseFloat(percentual) : null,
+        }),
+      });
+      event.target.reset();
+      await Promise.all([loadPartners(), loadTimeline()]);
+    } catch (err) {
+      errorEl.textContent = err.message;
+    }
+  });
+
+  document.getElementById("address-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const errorEl = document.getElementById("address-error");
+    errorEl.textContent = "";
+    try {
+      await apiFetch(`/companies/${companyId}/addresses`, {
+        method: "POST",
+        body: JSON.stringify({
+          tipo: document.getElementById("address-tipo").value,
+          logradouro: document.getElementById("address-logradouro").value.trim() || null,
+          numero: document.getElementById("address-numero").value.trim() || null,
+          bairro: document.getElementById("address-bairro").value.trim() || null,
+          municipio: document.getElementById("address-municipio").value.trim() || null,
+          uf: document.getElementById("address-uf").value.trim() || null,
+          cep: document.getElementById("address-cep").value.trim() || null,
+        }),
+      });
+      event.target.reset();
+      await Promise.all([loadAddresses(), loadTimeline()]);
+    } catch (err) {
+      errorEl.textContent = err.message;
+    }
+  });
+
+  document.getElementById("activity-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const errorEl = document.getElementById("activity-error");
+    errorEl.textContent = "";
+    try {
+      await apiFetch(`/companies/${companyId}/activities`, {
+        method: "POST",
+        body: JSON.stringify({
+          cnae_code: document.getElementById("activity-code").value.trim(),
+          description: document.getElementById("activity-description").value.trim() || null,
+          is_primary: document.getElementById("activity-primary").checked,
+        }),
+      });
+      event.target.reset();
+      await Promise.all([loadActivities(), loadTimeline()]);
+    } catch (err) {
+      errorEl.textContent = err.message;
+    }
+  });
+
+  document.getElementById("new-process-button").addEventListener("click", () => {
+    window.location.href = `process.html?company_id=${companyId}`;
+  });
+
+  (async () => {
+    if (!companyId) {
+      window.location.href = "companies.html";
+      return;
+    }
+    await requireSession();
+    document.getElementById("logout-button").addEventListener("click", signOut);
+    try {
+      await Promise.all([
+        loadCompany(),
+        loadPartners(),
+        loadAddresses(),
+        loadActivities(),
+        loadProcesses(),
+        loadTimeline(),
+      ]);
+    } catch (err) {
+      document.getElementById("company-panel").innerHTML = `<p class="error-message">${escapeHtml(err.message)}</p>`;
+    }
+  })();
+</script>
