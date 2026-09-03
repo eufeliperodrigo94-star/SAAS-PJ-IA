@@ -34,6 +34,9 @@
   --danger-soft: rgba(248, 113, 113, 0.14);
   --erro: #f87171;
 
+  --info: #8b7cff;
+  --info-soft: rgba(139, 124, 255, 0.14);
+
   font-family: "IBM Plex Sans", system-ui, sans-serif;
 }
 
@@ -325,6 +328,55 @@ button.link {
 .stat-card.ok .value { color: var(--ok); }
 .stat-card.atencao .value { color: var(--atencao); }
 .stat-card.erro .value { color: var(--erro); }
+
+/* --- Cards de métrica com ícone circular colorido (estilo FirstPromoter) --- */
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.metric-card {
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.metric-ic {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.metric-body .value {
+  font-family: "Manrope", sans-serif;
+  font-weight: 800;
+  font-size: 1.5rem;
+  line-height: 1.15;
+}
+
+.metric-body .label {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  margin-top: 2px;
+}
+
+.metric-ic.c-blue { background: var(--accent-soft); color: var(--accent); }
+.metric-ic.c-green { background: var(--success-soft); color: var(--ok); }
+.metric-ic.c-amber { background: var(--warning-soft); color: var(--atencao); }
+.metric-ic.c-red { background: var(--danger-soft); color: var(--erro); }
+.metric-ic.c-violet { background: var(--info-soft); color: var(--info); }
 
 .notice {
   background: var(--surface-2);
