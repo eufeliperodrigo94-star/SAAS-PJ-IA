@@ -1,0 +1,43 @@
+<title>Entrar — Admin</title>
+<link rel="stylesheet" href="assets/style.css" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="assets/config.js"></script>
+<script src="assets/app.js"></script>
+
+<div class="center-screen">
+  <div class="card">
+    <h1>Pré-Validação Empresarial</h1>
+    <p class="subtitle">Painel do administrador da plataforma.</p>
+
+    <form id="auth-form">
+      <label for="email">E-mail</label>
+      <input id="email" type="email" required autocomplete="email" />
+
+      <label for="password">Senha</label>
+      <input id="password" type="password" required autocomplete="current-password" minlength="6" />
+
+      <button class="primary" type="submit" id="submit-button">Entrar</button>
+      <p class="error-message" id="error-message"></p>
+    </form>
+  </div>
+</div>
+
+<script>
+  const form = document.getElementById("auth-form");
+  const errorMessage = document.getElementById("error-message");
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    errorMessage.textContent = "";
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+
+    try {
+      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      window.location.href = "admin.html";
+    } catch (err) {
+      errorMessage.textContent = err.message || "Não foi possível concluir a solicitação.";
+    }
+  });
+</script>
