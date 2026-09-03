@@ -92,6 +92,23 @@ docker compose up --build
    redeploya automaticamente a cada push.
 2. Atualize `CORS_ALLOW_ORIGINS` no Render (ou em `render.yaml`) com o domínio real do Vercel.
 
+**Painel admin em URL separada (opcional)** — o painel super-admin (`admin.html`) já funciona
+dentro do mesmo site, mas para dar a ele uma "porta de entrada" própria (útil antes de ter um
+domínio próprio, e pronto para virar `admin.seudominio.com` depois):
+
+1. No dashboard da Vercel, "Add New..." → "Project" → selecione este mesmo repositório GitHub
+   de novo (dá para conectar o mesmo repo a mais de um projeto Vercel).
+2. Em "Root Directory" desse novo projeto, escolha `frontend` (em vez da raiz do repositório).
+   A Vercel vai usar `frontend/vercel.json` — que só redireciona `/` para `admin.html` — em vez
+   do `vercel.json` da raiz (que redireciona `/` para `login.html`).
+3. Configure as mesmas variáveis/`assets/config.js` (é o mesmo build, só muda a página inicial).
+4. Isso cria uma segunda URL `.vercel.app` (ex.: `saas-pj-ia-admin.vercel.app`) cuja página
+   inicial já é o painel admin. **Isso é só conveniência de URL, não é uma barreira de
+   segurança** — a proteção de verdade continua sendo `require_super_admin` no backend; qualquer
+   página do site continua acessível pelo nome de arquivo em qualquer um dos dois projetos.
+5. Quando comprar um domínio próprio, aponte `admin.seudominio.com` para este segundo projeto e
+   `app.seudominio.com` (ou o domínio raiz) para o projeto original.
+
 ## Documentação
 
 Veja `docs/` para arquitetura, banco de dados, motor de regras, uso de IA e a revisão de
