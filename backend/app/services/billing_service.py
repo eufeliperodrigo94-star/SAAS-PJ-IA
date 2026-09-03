@@ -18,8 +18,28 @@ class CompanyLimitReachedError(DomainError):
         )
 
 
-def list_plans() -> list[dict]:
-    return billing_repo.list_plans()
+class PlanCodeAlreadyExistsError(DomainError):
+    def __init__(self, code: str) -> None:
+        super().__init__(f"Já existe um plano com o código '{code}'.", status_code=409)
+
+
+def list_plans(active_only: bool = True) -> list[dict]:
+    return billing_repo.list_plans(active_only=active_only)
+
+
+def create_plan(data: dict) -> dict:
+    if billing_repo.get_plan_by_code(data["code"]) is not None:
+        raise PlanCodeAlreadyExistsError(data["code"])
+    return billing_repo.create_plan(data)
+
+
+def update_plan(plan_id: str, data: dict) -> dict:
+    if billing_repo.get_plan(plan_id) is None:
+        raise PlanNotFoundError()
+    updated = billing_repo.update_plan(plan_id, {k: v for k, v in data.items() if v is not None})
+    if updated is None:
+        raise PlanNotFoundError()
+    return updated
 
 
 def ensure_default_subscription(organization_id: str) -> dict:

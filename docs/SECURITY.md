@@ -68,6 +68,23 @@ pela própria API. Coberto por testes unitários (`test_require_super_admin.py`,
 `test_admin_service.py`) e de integração (`test_integration_isolation.py`: rota `/admin/*`
 bloqueada para usuário comum, liberada para super admin).
 
+### Extensão: suporte, vendas e CRUD de planos (`0006_admin_extras.sql`)
+
+- **Suporte**: `/support/*` (cliente) fica atrás de `require_organization` de sempre — RLS em
+  `support_tickets`/`support_ticket_messages` impede um membro de uma organização ler ou responder
+  chamado de outra. `/admin/support/*` (visão e resposta de qualquer chamado) fica atrás de
+  `require_super_admin`, igual ao resto do `/admin/*`.
+- **Vendas** (`GET /admin/sales`): apenas leitura agregada de `subscriptions`/`plans` já
+  existentes — nenhum dado novo, nenhuma superfície de escrita.
+- **CRUD de planos** (`POST/PATCH /admin/plans`): igualmente atrás de `require_super_admin`.
+  Não existe `DELETE` — um plano é desativado (`active = false`), nunca apagado, para não quebrar
+  organizações que já assinam aquele plano; `GET /plans` (rota pública, usada na troca de plano
+  pelo próprio cliente) filtra para `active = true`, então um plano descontinuado nunca aparece
+  como opção para um novo cliente, mas continua funcionando para quem já está nele.
+- Coberto por testes de integração (`test_integration_admin_extras.py`): isolamento de tickets
+  entre organizações, bloqueio de `/admin/support/*` e `/admin/sales` para usuário comum,
+  CRUD de planos.
+
 ## Limitações conhecidas (fora do escopo do MVP)
 
 - **Sem rate limiting nos endpoints que chamam IA** (`POST /documents/{id}/extract`,

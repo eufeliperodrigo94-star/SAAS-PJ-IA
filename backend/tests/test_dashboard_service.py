@@ -11,12 +11,16 @@ def test_get_summary_aggregates_all_sources(monkeypatch):
             return 1
         if statuses == dashboard_service.READY_STATUSES:
             return 2
+        if statuses == ["pronto_para_protocolo"]:
+            return 2
+        if len(statuses) == 1 and statuses[0] in dashboard_service.ALL_PROCESS_STATUSES:
+            return 1
         raise AssertionError(f"unexpected statuses {statuses}")
 
     monkeypatch.setattr("app.repositories.processes_repo.count_by_status", fake_count_by_status)
 
     def fake_count_by_result(org_id, result):
-        return {"erro": 4, "atencao": 7}[result]
+        return {"erro": 4, "atencao": 7, "ok": 9}[result]
 
     monkeypatch.setattr("app.repositories.validations_repo.count_by_result", fake_count_by_result)
     monkeypatch.setattr(
@@ -38,6 +42,8 @@ def test_get_summary_aggregates_all_sources(monkeypatch):
     assert summary["alerts"] == 7
     assert summary["ai_usage_last_30_days"]["calls"] == 12
     assert summary["current_plan"]["code"] == "starter"
+    assert summary["processes_by_status"]["pronto_para_protocolo"] == 2
+    assert summary["validations_by_result"] == {"ok": 9, "atencao": 7, "erro": 4}
 
 
 def test_get_summary_handles_no_subscription(monkeypatch):

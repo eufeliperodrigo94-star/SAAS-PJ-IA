@@ -85,6 +85,25 @@ policy de RLS nova: o backend usa a `service_role` key e faz essa checagem no pr
 Promover alguém a super admin hoje é manual (`update users set is_super_admin = true where id = ...`)
 — não há UI para isso, de propósito, dado o alcance da permissão.
 
+## Suporte, vendas e planos ativáveis (`0006_admin_extras.sql`)
+
+| Tabela | Descrição |
+|---|---|
+| `support_tickets` | Chamado de suporte aberto por um membro da organização (assunto, status: aberto/em_andamento/resolvido/fechado, prioridade). |
+| `support_ticket_messages` | Mensagens de um chamado (thread), com `author_is_admin` distinguindo resposta do super admin da do cliente. |
+
+RLS igual ao padrão do resto do sistema (`is_org_member(organization_id)`): qualquer membro da
+organização abre e responde os próprios chamados via `/support/*`. O painel admin
+(`/admin/support/*`) vê e responde chamados de qualquer organização — via `service_role`, RLS não
+entra em jogo ali.
+
+`plans` ganhou a coluna `active boolean` (default `true`): um plano pode ser descontinuado
+(`active = false`) sem afetar organizações já assinantes dele. `GET /plans` (rota pública)
+só lista planos ativos; `GET /admin/plans` lista todos. "Vendas" não é uma tabela nova — 
+`GET /admin/sales` (`app/services/admin_service.get_sales_summary`) calcula MRR, contagem de
+assinaturas ativas/trial e conversão diretamente de `subscriptions` + `plans`, já existentes
+desde o Dia 1.
+
 ## RLS
 
 Toda tabela de domínio tem RLS habilitado com policy baseada em:

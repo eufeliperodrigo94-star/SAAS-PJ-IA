@@ -15,7 +15,7 @@ services:
         value: claude-sonnet-5
       # Origem(s) do frontend que pode chamar esta API (separadas por vírgula).
       - key: CORS_ALLOW_ORIGINS
-        value: https://saas-pj-ia.vercel.app,http://localhost:8080
+        value: https://saas-pj-ia.vercel.app,https://saas-pj-ia-kchg.vercel.app,http://localhost:8080
       # Preenchidos manualmente no dashboard do Render (Environment) — nunca
       # commitados. Ver docs/ARCHITECTURE.md e .env.example.
       - key: SUPABASE_URL

@@ -7,6 +7,21 @@ class PlanOut(BaseModel):
     name: str
     max_companies: int | None
     price_cents: int | None
+    active: bool = True
+
+
+class PlanCreate(BaseModel):
+    code: str = Field(min_length=2, max_length=50)
+    name: str = Field(min_length=2, max_length=100)
+    max_companies: int | None = None
+    price_cents: int | None = None
+
+
+class PlanUpdate(BaseModel):
+    name: str | None = None
+    max_companies: int | None = None
+    price_cents: int | None = None
+    active: bool | None = None
 
 
 class SubscriptionOut(BaseModel):

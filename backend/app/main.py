@@ -11,6 +11,7 @@ from app.api import (
     documents,
     health,
     processes,
+    support,
 )
 from app.core.config import get_settings
 from app.core.exceptions import DomainError, domain_error_handler, unhandled_error_handler
@@ -41,3 +42,4 @@ app.include_router(processes.router)
 app.include_router(documents.router)
 app.include_router(assistant.router)
 app.include_router(billing.router)
+app.include_router(support.router)
