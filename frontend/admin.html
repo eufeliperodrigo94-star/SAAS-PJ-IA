@@ -13,6 +13,7 @@
       <a href="#" title="Abra um processo para enviar documentos">Documentos</a>
       <a href="#" title="Abra um processo para usar o assistente">Assistente IA</a>
       <a href="assinatura.html">Assinatura</a>
+      <a href="suporte.html">Suporte</a>
       <a href="admin.html" class="active">Admin</a>
     </nav>
   </aside>
@@ -31,14 +32,86 @@
     <div id="admin-content" style="display: none">
       <div class="stat-grid" id="metrics-grid">Carregando…</div>
 
-      <div class="panel">
-        <h2>Organizações</h2>
-        <div id="organizations-table">Carregando…</div>
+      <div class="tabs" style="margin-bottom: 20px">
+        <button type="button" class="tab-button active" data-tab="organizacoes">Organizações</button>
+        <button type="button" class="tab-button" data-tab="suporte">Suporte</button>
+        <button type="button" class="tab-button" data-tab="vendas">Vendas</button>
+        <button type="button" class="tab-button" data-tab="planos">Planos</button>
       </div>
 
-      <div class="panel" id="org-detail-panel" style="display: none">
-        <h2 id="org-detail-title">Detalhe da organização</h2>
-        <div id="org-detail-content"></div>
+      <div id="tab-organizacoes" class="tab-pane">
+        <div class="panel">
+          <h2>Organizações</h2>
+          <div id="organizations-table">Carregando…</div>
+        </div>
+
+        <div class="panel" id="org-detail-panel" style="display: none">
+          <h2 id="org-detail-title">Detalhe da organização</h2>
+          <div id="org-detail-content"></div>
+        </div>
+      </div>
+
+      <div id="tab-suporte" class="tab-pane" style="display: none">
+        <div class="panel">
+          <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 16px">
+            <h2 style="margin: 0">Chamados de suporte</h2>
+            <select id="ticket-status-filter" style="margin-left: auto">
+              <option value="">Todos os status</option>
+              <option value="aberto">Aberto</option>
+              <option value="em_andamento">Em andamento</option>
+              <option value="resolvido">Resolvido</option>
+              <option value="fechado">Fechado</option>
+            </select>
+          </div>
+          <div id="tickets-table">Carregando…</div>
+        </div>
+
+        <div class="panel" id="ticket-detail-panel" style="display: none">
+          <h2 id="ticket-detail-title">Chamado</h2>
+          <div id="ticket-detail-content"></div>
+        </div>
+      </div>
+
+      <div id="tab-vendas" class="tab-pane" style="display: none">
+        <div class="panel">
+          <h2>Vendas e assinaturas</h2>
+          <div id="sales-content">Carregando…</div>
+        </div>
+      </div>
+
+      <div id="tab-planos" class="tab-pane" style="display: none">
+        <div class="panel">
+          <div style="display: flex; align-items: center; margin-bottom: 16px">
+            <h2 style="margin: 0">Planos</h2>
+          </div>
+          <div id="plans-admin-table">Carregando…</div>
+        </div>
+
+        <div class="panel">
+          <h2>Novo plano</h2>
+          <form id="new-plan-form" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; align-items: end">
+            <div>
+              <label for="new-plan-code">Código</label>
+              <input id="new-plan-code" required placeholder="ex.: enterprise" />
+            </div>
+            <div>
+              <label for="new-plan-name">Nome</label>
+              <input id="new-plan-name" required placeholder="ex.: Enterprise" />
+            </div>
+            <div>
+              <label for="new-plan-max-companies">Limite de empresas</label>
+              <input id="new-plan-max-companies" type="number" min="1" placeholder="vazio = ilimitado" />
+            </div>
+            <div>
+              <label for="new-plan-price">Preço (R$/mês)</label>
+              <input id="new-plan-price" type="number" min="0" step="0.01" placeholder="0,00" />
+            </div>
+            <div style="grid-column: span 4">
+              <button class="primary" type="submit">Criar plano</button>
+              <p class="error-message" id="new-plan-error"></p>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   </main>
@@ -55,6 +128,30 @@
     return cents == null ? "sob consulta" : "R$ " + (cents / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2 });
   }
 
+  function formatDateTime(iso) {
+    return new Date(iso).toLocaleString("pt-BR");
+  }
+
+  const TICKET_STATUS_LABELS = {
+    aberto: "Aberto",
+    em_andamento: "Em andamento",
+    resolvido: "Resolvido",
+    fechado: "Fechado",
+  };
+
+  // --- Abas -----------------------------------------------------------
+  function setupTabs() {
+    document.querySelectorAll(".tab-button").forEach((button) => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll(".tab-button").forEach((b) => b.classList.remove("active"));
+        document.querySelectorAll(".tab-pane").forEach((p) => (p.style.display = "none"));
+        button.classList.add("active");
+        document.getElementById(`tab-${button.dataset.tab}`).style.display = "block";
+      });
+    });
+  }
+
+  // --- Métricas gerais --------------------------------------------------
   async function loadMetrics() {
     const metrics = await apiFetch("/admin/metrics");
     const usage = metrics.ai_usage_last_30_days;
@@ -77,6 +174,7 @@
       </div>`;
   }
 
+  // --- Organizações -------------------------------------------------
   async function loadOrganizationDetail(organizationId) {
     const detail = await apiFetch(`/admin/organizations/${organizationId}`);
     const panel = document.getElementById("org-detail-panel");
@@ -106,12 +204,12 @@
     panel.style.display = "block";
     document.getElementById("org-detail-title").scrollIntoView({ behavior: "smooth" });
 
-    const plans = await apiFetch("/plans");
+    const plans = await apiFetch("/admin/plans");
     const select = document.getElementById("admin-plan-select");
     select.innerHTML = plans
       .map(
         (p) =>
-          `<option value="${p.code}" ${detail.plan && detail.plan.code === p.code ? "selected" : ""}>${escapeHtml(p.name)} (${formatPrice(p.price_cents)})</option>`
+          `<option value="${p.code}" ${detail.plan && detail.plan.code === p.code ? "selected" : ""}>${escapeHtml(p.name)} (${formatPrice(p.price_cents)})${p.active ? "" : " — inativo"}</option>`
       )
       .join("");
 
@@ -160,9 +258,190 @@
     });
   }
 
+  // --- Suporte --------------------------------------------------------
+  async function loadTicketDetail(ticketId) {
+    const ticket = await apiFetch(`/admin/support/tickets/${ticketId}`);
+    const panel = document.getElementById("ticket-detail-panel");
+    document.getElementById("ticket-detail-title").textContent = `Chamado · ${ticket.subject}`;
+
+    const messagesHtml = ticket.messages
+      .map(
+        (m) => `
+      <div style="padding: 10px 0; border-top: 1px solid var(--border)">
+        <div style="font-size: 0.8rem; color: var(--text-muted)">
+          ${m.author_is_admin ? "<strong>Suporte</strong>" : "Cliente"} · ${formatDateTime(m.created_at)}
+        </div>
+        <div style="margin-top: 4px; white-space: pre-wrap">${escapeHtml(m.body)}</div>
+      </div>`
+      )
+      .join("");
+
+    panel.innerHTML = `
+      <p style="color: var(--text-muted)">Organização: ${escapeHtml(ticket.organizations ? ticket.organizations.name : "—")}</p>
+      <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px">
+        <label for="ticket-status-select" style="margin: 0">Status</label>
+        <select id="ticket-status-select">
+          ${Object.entries(TICKET_STATUS_LABELS)
+            .map(([value, label]) => `<option value="${value}" ${ticket.status === value ? "selected" : ""}>${label}</option>`)
+            .join("")}
+        </select>
+      </div>
+      <div>${messagesHtml || "<p>Nenhuma mensagem.</p>"}</div>
+      <form id="ticket-reply-form" style="margin-top: 16px">
+        <label for="ticket-reply-body">Responder</label>
+        <textarea id="ticket-reply-body" required rows="3" style="width: 100%"></textarea>
+        <button class="primary" type="submit" style="margin-top: 8px">Enviar resposta</button>
+        <p class="error-message" id="ticket-reply-error"></p>
+      </form>`;
+    panel.style.display = "block";
+    panel.scrollIntoView({ behavior: "smooth" });
+
+    document.getElementById("ticket-status-select").addEventListener("change", async (event) => {
+      await apiFetch(`/admin/support/tickets/${ticketId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: event.target.value }),
+      });
+      await loadTickets();
+    });
+
+    document.getElementById("ticket-reply-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const errorEl = document.getElementById("ticket-reply-error");
+      errorEl.textContent = "";
+      try {
+        await apiFetch(`/admin/support/tickets/${ticketId}/messages`, {
+          method: "POST",
+          body: JSON.stringify({ body: document.getElementById("ticket-reply-body").value }),
+        });
+        await loadTicketDetail(ticketId);
+        await loadTickets();
+      } catch (err) {
+        errorEl.textContent = err.message || "Não foi possível enviar a resposta.";
+      }
+    });
+  }
+
+  async function loadTickets() {
+    const status = document.getElementById("ticket-status-filter").value;
+    const query = status ? `?status=${encodeURIComponent(status)}` : "";
+    const tickets = await apiFetch(`/admin/support/tickets${query}`);
+
+    const rows = tickets
+      .map(
+        (t) => `
+      <tr>
+        <td>${escapeHtml(t.organizations ? t.organizations.name : "—")}</td>
+        <td>${escapeHtml(t.subject)}</td>
+        <td><span class="badge status-${t.status}">${TICKET_STATUS_LABELS[t.status] || t.status}</span></td>
+        <td>${formatDateTime(t.updated_at)}</td>
+        <td><button class="secondary" data-ticket-id="${t.id}">Abrir</button></td>
+      </tr>`
+      )
+      .join("");
+
+    document.getElementById("tickets-table").innerHTML = `
+      <table>
+        <thead><tr><th>Organização</th><th>Assunto</th><th>Status</th><th>Atualizado em</th><th></th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="5">Nenhum chamado.</td></tr>'}</tbody>
+      </table>`;
+
+    document.querySelectorAll("button[data-ticket-id]").forEach((button) => {
+      button.addEventListener("click", () => loadTicketDetail(button.dataset.ticketId));
+    });
+  }
+
+  // --- Vendas -----------------------------------------------------------
+  async function loadSales() {
+    const sales = await apiFetch("/admin/sales");
+    const byPlanRows = sales.by_plan
+      .map(
+        (p) => `
+      <tr>
+        <td>${escapeHtml(p.plan_name)}</td>
+        <td>${p.count}</td>
+        <td>${formatPrice(p.mrr_cents)}</td>
+      </tr>`
+      )
+      .join("");
+
+    document.getElementById("sales-content").innerHTML = `
+      <div class="stat-grid" style="margin-bottom: 20px">
+        <div class="stat-card"><div class="value">${formatPrice(sales.mrr_cents)}</div><div class="label">MRR</div></div>
+        <div class="stat-card"><div class="value">${sales.active_subscriptions}</div><div class="label">Assinaturas ativas</div></div>
+        <div class="stat-card"><div class="value">${sales.trialing_subscriptions}</div><div class="label">Em trial</div></div>
+        <div class="stat-card"><div class="value">${(sales.conversion_rate * 100).toFixed(1)}%</div><div class="label">Taxa de conversão</div></div>
+      </div>
+      <table>
+        <thead><tr><th>Plano</th><th>Assinaturas</th><th>MRR</th></tr></thead>
+        <tbody>${byPlanRows || '<tr><td colspan="3">Sem dados.</td></tr>'}</tbody>
+      </table>`;
+  }
+
+  // --- Planos -------------------------------------------------------
+  async function loadPlansAdmin() {
+    const plans = await apiFetch("/admin/plans");
+    const rows = plans
+      .map(
+        (p) => `
+      <tr>
+        <td>${escapeHtml(p.name)} <span class="badge">${escapeHtml(p.code)}</span></td>
+        <td>${p.max_companies ?? "ilimitado"}</td>
+        <td>${formatPrice(p.price_cents)}</td>
+        <td>${p.active ? '<span class="badge b-success">ativo</span>' : '<span class="badge">inativo</span>'}</td>
+        <td><button class="secondary" data-toggle-plan-id="${p.id}" data-active="${p.active}">${p.active ? "Desativar" : "Ativar"}</button></td>
+      </tr>`
+      )
+      .join("");
+
+    document.getElementById("plans-admin-table").innerHTML = `
+      <table>
+        <thead><tr><th>Plano</th><th>Limite</th><th>Preço</th><th>Status</th><th></th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="5">Nenhum plano cadastrado.</td></tr>'}</tbody>
+      </table>`;
+
+    document.querySelectorAll("button[data-toggle-plan-id]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const nextActive = button.dataset.active !== "true";
+        await apiFetch(`/admin/plans/${button.dataset.togglePlanId}`, {
+          method: "PATCH",
+          body: JSON.stringify({ active: nextActive }),
+        });
+        await loadPlansAdmin();
+      });
+    });
+  }
+
+  function setupNewPlanForm() {
+    document.getElementById("new-plan-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const errorEl = document.getElementById("new-plan-error");
+      errorEl.textContent = "";
+      const priceReais = document.getElementById("new-plan-price").value;
+      const maxCompanies = document.getElementById("new-plan-max-companies").value;
+      try {
+        await apiFetch("/admin/plans", {
+          method: "POST",
+          body: JSON.stringify({
+            code: document.getElementById("new-plan-code").value.trim(),
+            name: document.getElementById("new-plan-name").value.trim(),
+            max_companies: maxCompanies ? Number(maxCompanies) : null,
+            price_cents: priceReais ? Math.round(Number(priceReais) * 100) : null,
+          }),
+        });
+        event.target.reset();
+        await loadPlansAdmin();
+      } catch (err) {
+        errorEl.textContent = err.message || "Não foi possível criar o plano.";
+      }
+    });
+  }
+
   (async () => {
     await requireSession();
     document.getElementById("logout-button").addEventListener("click", signOut);
+    setupTabs();
+    setupNewPlanForm();
+    document.getElementById("ticket-status-filter").addEventListener("change", loadTickets);
 
     try {
       const me = await apiFetch("/auth/me");
@@ -173,6 +452,9 @@
       document.getElementById("admin-content").style.display = "block";
       await loadMetrics();
       await loadOrganizations();
+      await loadTickets();
+      await loadSales();
+      await loadPlansAdmin();
     } catch (err) {
       document.getElementById("denied-notice").textContent = err.message || "Não foi possível carregar o painel.";
       document.getElementById("denied-notice").style.display = "block";

@@ -1,0 +1,171 @@
+<title>Suporte — SaaS Pré-Validação Empresarial</title>
+<link rel="stylesheet" href="assets/style.css" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="assets/config.js"></script>
+<script src="assets/app.js"></script>
+
+<div class="app-shell">
+  <aside class="sidebar">
+    <h2>Pré-Validação PE</h2>
+    <nav>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="companies.html">Empresas</a>
+      <a href="#" title="Abra um processo para enviar documentos">Documentos</a>
+      <a href="#" title="Abra um processo para usar o assistente">Assistente IA</a>
+      <a href="assinatura.html">Assinatura</a>
+      <a href="suporte.html" class="active">Suporte</a>
+      <a href="admin.html" id="nav-admin" style="display: none">Admin</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <strong>Suporte</strong>
+      <button id="logout-button" type="button">Sair</button>
+    </div>
+
+    <div class="panel">
+      <h2>Abrir chamado</h2>
+      <form id="new-ticket-form">
+        <label for="ticket-subject">Assunto</label>
+        <input id="ticket-subject" required maxlength="200" placeholder="Ex.: Dúvida sobre pré-validação" />
+
+        <label for="ticket-body">Descreva o que você precisa</label>
+        <textarea id="ticket-body" required rows="4" style="width: 100%"></textarea>
+
+        <button class="primary" type="submit" style="margin-top: 12px">Enviar</button>
+        <p class="error-message" id="new-ticket-error"></p>
+      </form>
+    </div>
+
+    <div class="panel">
+      <h2>Meus chamados</h2>
+      <div id="tickets-list">Carregando…</div>
+    </div>
+
+    <div class="panel" id="ticket-detail-panel" style="display: none">
+      <h2 id="ticket-detail-title">Chamado</h2>
+      <div id="ticket-detail-content"></div>
+    </div>
+  </main>
+</div>
+
+<script>
+  function escapeHtml(value) {
+    const div = document.createElement("div");
+    div.textContent = value ?? "";
+    return div.innerHTML;
+  }
+
+  function formatDateTime(iso) {
+    return new Date(iso).toLocaleString("pt-BR");
+  }
+
+  const TICKET_STATUS_LABELS = {
+    aberto: "Aberto",
+    em_andamento: "Em andamento",
+    resolvido: "Resolvido",
+    fechado: "Fechado",
+  };
+
+  async function loadTicketDetail(ticketId) {
+    const ticket = await apiFetch(`/support/tickets/${ticketId}`);
+    const panel = document.getElementById("ticket-detail-panel");
+    document.getElementById("ticket-detail-title").textContent = `Chamado · ${ticket.subject}`;
+
+    const messagesHtml = ticket.messages
+      .map(
+        (m) => `
+      <div style="padding: 10px 0; border-top: 1px solid var(--border)">
+        <div style="font-size: 0.8rem; color: var(--text-muted)">
+          ${m.author_is_admin ? "<strong>Suporte</strong>" : "Você"} · ${formatDateTime(m.created_at)}
+        </div>
+        <div style="margin-top: 4px; white-space: pre-wrap">${escapeHtml(m.body)}</div>
+      </div>`
+      )
+      .join("");
+
+    panel.innerHTML = `
+      <p style="color: var(--text-muted)">Status: <span class="badge">${TICKET_STATUS_LABELS[ticket.status] || ticket.status}</span></p>
+      <div>${messagesHtml || "<p>Nenhuma mensagem.</p>"}</div>
+      <form id="ticket-reply-form" style="margin-top: 16px">
+        <label for="ticket-reply-body">Responder</label>
+        <textarea id="ticket-reply-body" required rows="3" style="width: 100%"></textarea>
+        <button class="primary" type="submit" style="margin-top: 8px">Enviar</button>
+        <p class="error-message" id="ticket-reply-error"></p>
+      </form>`;
+    panel.style.display = "block";
+    panel.scrollIntoView({ behavior: "smooth" });
+
+    document.getElementById("ticket-reply-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const errorEl = document.getElementById("ticket-reply-error");
+      errorEl.textContent = "";
+      try {
+        await apiFetch(`/support/tickets/${ticketId}/messages`, {
+          method: "POST",
+          body: JSON.stringify({ body: document.getElementById("ticket-reply-body").value }),
+        });
+        await loadTicketDetail(ticketId);
+      } catch (err) {
+        errorEl.textContent = err.message || "Não foi possível enviar a mensagem.";
+      }
+    });
+  }
+
+  async function loadTickets() {
+    const tickets = await apiFetch("/support/tickets");
+    const rows = tickets
+      .map(
+        (t) => `
+      <tr>
+        <td>${escapeHtml(t.subject)}</td>
+        <td><span class="badge">${TICKET_STATUS_LABELS[t.status] || t.status}</span></td>
+        <td>${formatDateTime(t.updated_at)}</td>
+        <td><button class="secondary" data-ticket-id="${t.id}">Abrir</button></td>
+      </tr>`
+      )
+      .join("");
+
+    document.getElementById("tickets-list").innerHTML = `
+      <table>
+        <thead><tr><th>Assunto</th><th>Status</th><th>Atualizado em</th><th></th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="4">Nenhum chamado aberto ainda.</td></tr>'}</tbody>
+      </table>`;
+
+    document.querySelectorAll("button[data-ticket-id]").forEach((button) => {
+      button.addEventListener("click", () => loadTicketDetail(button.dataset.ticketId));
+    });
+  }
+
+  (async () => {
+    await requireSession();
+    showAdminNavIfSuperAdmin();
+    document.getElementById("logout-button").addEventListener("click", signOut);
+
+    document.getElementById("new-ticket-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const errorEl = document.getElementById("new-ticket-error");
+      errorEl.textContent = "";
+      try {
+        await apiFetch("/support/tickets", {
+          method: "POST",
+          body: JSON.stringify({
+            subject: document.getElementById("ticket-subject").value,
+            body: document.getElementById("ticket-body").value,
+          }),
+        });
+        event.target.reset();
+        await loadTickets();
+      } catch (err) {
+        errorEl.textContent = err.message || "Não foi possível abrir o chamado.";
+      }
+    });
+
+    try {
+      await loadTickets();
+    } catch (err) {
+      document.getElementById("tickets-list").innerHTML = `<p class="error-message">${escapeHtml(err.message)}</p>`;
+    }
+  })();
+</script>

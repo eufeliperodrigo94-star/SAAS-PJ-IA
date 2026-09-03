@@ -40,3 +40,19 @@ class PlatformMetricsOut(BaseModel):
     total_companies: int
     total_processes: int
     ai_usage_last_30_days: AiUsageSummaryOut
+
+
+class SalesByPlanOut(BaseModel):
+    plan_code: str
+    plan_name: str
+    count: int
+    mrr_cents: int
+
+
+class SalesSummaryOut(BaseModel):
+    mrr_cents: int
+    active_subscriptions: int
+    trialing_subscriptions: int
+    other_subscriptions: int
+    conversion_rate: float
+    by_plan: list[SalesByPlanOut]
