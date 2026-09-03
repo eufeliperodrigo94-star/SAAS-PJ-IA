@@ -72,16 +72,23 @@
 
     <div class="panel">
       <h2>Empresas cadastradas</h2>
+      <div class="search-row">
+        <div class="search-box">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input id="companies-search" type="text" placeholder="Buscar por razão social ou CNPJ" />
+        </div>
+      </div>
       <table id="companies-table">
         <thead>
           <tr>
             <th>Razão social</th>
             <th>CNPJ</th>
             <th>Município/UF</th>
+            <th></th>
           </tr>
         </thead>
         <tbody id="companies-body">
-          <tr><td colspan="3">Carregando…</td></tr>
+          <tr><td colspan="4">Carregando…</td></tr>
         </tbody>
       </table>
     </div>
@@ -97,27 +104,52 @@
     return div.innerHTML;
   }
 
+  const COMPANY_ICON =
+    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="4" y="3" width="9" height="18" rx="1"/><rect x="13" y="8" width="7" height="13" rx="1"/></svg>';
+
+  let allCompanies = [];
+
+  function renderCompanies(companies) {
+    if (companies.length === 0) {
+      companiesBody.innerHTML = '<tr><td colspan="4">Nenhuma empresa encontrada.</td></tr>';
+      return;
+    }
+    companiesBody.innerHTML = companies
+      .map(
+        (c) => `
+      <tr class="clickable" onclick="window.location.href='company.html?id=${c.id}'">
+        <td><div class="row-title"><div class="company-ic">${COMPANY_ICON}</div>${escapeHtml(c.razao_social)}${c.nome_fantasia ? ` <span class="badge">${escapeHtml(c.nome_fantasia)}</span>` : ""}</div></td>
+        <td>${escapeHtml(c.cnpj) || "—"}</td>
+        <td>${escapeHtml(c.municipio) || "—"}${c.uf ? "/" + escapeHtml(c.uf) : ""}</td>
+        <td class="chev">›</td>
+      </tr>`
+      )
+      .join("");
+  }
+
   async function loadCompanies() {
     try {
-      const companies = await apiFetch("/companies");
-      if (companies.length === 0) {
-        companiesBody.innerHTML = '<tr><td colspan="3">Nenhuma empresa cadastrada ainda.</td></tr>';
-        return;
-      }
-      companiesBody.innerHTML = companies
-        .map(
-          (c) => `
-        <tr class="clickable" onclick="window.location.href='company.html?id=${c.id}'">
-          <td>${escapeHtml(c.razao_social)}${c.nome_fantasia ? ` <span class="badge">${escapeHtml(c.nome_fantasia)}</span>` : ""}</td>
-          <td>${escapeHtml(c.cnpj) || "—"}</td>
-          <td>${escapeHtml(c.municipio) || "—"}${c.uf ? "/" + escapeHtml(c.uf) : ""}</td>
-        </tr>`
-        )
-        .join("");
+      allCompanies = await apiFetch("/companies");
+      renderCompanies(allCompanies);
     } catch (err) {
-      companiesBody.innerHTML = `<tr><td colspan="3">Erro ao carregar empresas: ${escapeHtml(err.message)}</td></tr>`;
+      companiesBody.innerHTML = `<tr><td colspan="4">Erro ao carregar empresas: ${escapeHtml(err.message)}</td></tr>`;
     }
   }
+
+  document.getElementById("companies-search").addEventListener("input", (event) => {
+    const term = event.target.value.trim().toLowerCase();
+    if (!term) {
+      renderCompanies(allCompanies);
+      return;
+    }
+    renderCompanies(
+      allCompanies.filter(
+        (c) =>
+          c.razao_social.toLowerCase().includes(term) ||
+          (c.cnpj || "").toLowerCase().includes(term)
+      )
+    );
+  });
 
   document.getElementById("company-form").addEventListener("submit", async (event) => {
     event.preventDefault();

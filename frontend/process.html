@@ -30,15 +30,28 @@
       <button id="logout-button" type="button">Sair</button>
     </div>
 
-    <a class="back-link" id="back-link" href="companies.html">← Voltar para a empresa</a>
+    <div class="crumb">
+      <a href="companies.html" style="color: inherit">Empresas</a>
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="9 18 15 12 9 6"/></svg>
+      <a id="back-link" href="companies.html" style="color: inherit">Empresa</a>
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="9 18 15 12 9 6"/></svg>
+      <span>Novo processo</span>
+    </div>
 
-    <div class="panel">
-      <h2>Memória empresarial reutilizada</h2>
-      <div id="memory-summary" class="notice">Carregando histórico da empresa…</div>
+    <div class="memory-panel">
+      <div class="memory-head">
+        <div class="memory-ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg></div>
+        <h2>Memória empresarial reutilizada</h2>
+      </div>
+      <div id="memory-summary">Carregando histórico da empresa…</div>
     </div>
 
     <div class="panel">
-      <h2 id="company-label">Carregando empresa…</h2>
+      <div class="panel-head">
+        <div class="panel-head-left">
+          <h2 id="company-label">Carregando empresa…</h2>
+        </div>
+      </div>
       <form id="process-form">
         <label for="process-type">Tipo de processo *</label>
         <select id="process-type" required>
@@ -59,9 +72,10 @@
         <button class="primary" type="submit">Criar processo</button>
         <p class="error-message" id="form-error"></p>
       </form>
-      <p class="notice" style="margin-top: 16px">
+      <p class="panel-note" style="margin-top: 16px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         Após criar o processo você poderá executar a pré-validação (motor de regras) e ver o
-        resultado. A interpretação automática da descrição por IA chega no Dia 5.
+        resultado, além de usar o assistente de IA para interpretar sua descrição.
       </p>
     </div>
   </main>
@@ -91,12 +105,20 @@
       const cnaes = memory.activities.map((a) => escapeHtml(a.cnae_code)).join(", ") || "nenhum CNAE cadastrado";
 
       memoryEl.innerHTML = `
-        Estes dados já estão na memória da empresa e não precisam ser redigitados:<br />
-        <strong>Sócios:</strong> ${partnerNames}<br />
-        <strong>Endereço atual:</strong> ${addressText}<br />
-        <strong>CNAEs:</strong> ${cnaes}<br />
-        <strong>Processos em aberto:</strong> ${memory.open_processes}
-        ${memory.open_processes > 0 ? " — verifique se este processo não duplica um já iniciado." : ""}`;
+        <div class="memory-grid">
+          <div class="memory-item"><div class="l">Sócios</div><div class="v">${partnerNames}</div></div>
+          <div class="memory-item"><div class="l">Endereço atual</div><div class="v">${addressText}</div></div>
+          <div class="memory-item"><div class="l">CNAEs</div><div class="v">${cnaes}</div></div>
+          <div class="memory-item"><div class="l">Processos em aberto</div><div class="v">${memory.open_processes}</div></div>
+        </div>
+        ${
+          memory.open_processes > 0
+            ? `<div class="memory-flag">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                Verifique se este processo não duplica um já iniciado.
+              </div>`
+            : ""
+        }`;
     } catch (err) {
       memoryEl.textContent = "Não foi possível carregar o histórico da empresa.";
     }

@@ -31,9 +31,15 @@
       <button id="logout-button" type="button">Sair</button>
     </div>
 
-    <a class="back-link" id="back-link" href="companies.html">← Voltar para a empresa</a>
+    <div class="crumb">
+      <a href="companies.html" style="color: inherit">Empresas</a>
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="9 18 15 12 9 6"/></svg>
+      <a id="back-link" href="companies.html" style="color: inherit">Empresa</a>
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="9 18 15 12 9 6"/></svg>
+      <span>Processo</span>
+    </div>
 
-    <div class="panel" id="process-panel">Carregando…</div>
+    <div class="process-hero" id="process-panel">Carregando…</div>
 
     <details class="panel">
       <summary style="cursor: pointer; font-weight: 700">Como protocolar na JUCEPE (guia oficial)</summary>
@@ -49,7 +55,8 @@
         <h2 style="margin: 0">Resultado da pré-validação</h2>
         <button class="secondary" id="validate-button" type="button">Executar pré-validação</button>
       </div>
-      <p class="notice" style="margin-bottom: 16px">
+      <p class="panel-note">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         As regras rodam de forma determinística (sem IA) contra os dados já cadastrados da
         empresa. Isto é uma pré-análise — não substitui a decisão do órgão oficial.
       </p>
@@ -70,9 +77,12 @@
 
     <div class="panel">
       <h2>Documentos</h2>
-      <form id="upload-form" class="form-grid" style="margin-bottom: 20px">
-        <div><label>Arquivo</label><input id="upload-file" type="file" required /></div>
-        <div><button class="secondary" type="submit">Enviar documento</button></div>
+      <form id="upload-form" class="upload-row">
+        <div class="dropzone">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <input id="upload-file" type="file" required style="border: none; background: transparent; padding: 0" />
+        </div>
+        <button class="secondary" type="submit">Enviar documento</button>
       </form>
       <p class="error-message" id="upload-error"></p>
       <table>
@@ -83,7 +93,8 @@
 
     <div class="panel">
       <h2>Extrair e cruzar dados de um documento</h2>
-      <p class="notice" style="margin-bottom: 16px">
+      <p class="panel-note">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-4 4v-4H6a2 2 0 0 1-2-2z"/></svg>
         Cole o texto do documento (ex.: contrato social) para a IA extrair os dados e compará-los
         com o cadastro da empresa. A IA nunca decide sozinha: o resultado é uma sugestão para
         revisão — quem confirma é você.
@@ -101,7 +112,8 @@
 
     <div class="panel">
       <h2>Assistente IA</h2>
-      <p class="notice" style="margin-bottom: 16px">
+      <p class="panel-note">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-4 4v-4H6a2 2 0 0 1-2-2z"/></svg>
         Descreva em linguagem natural o que deseja fazer neste processo. A IA transforma isso em
         uma proposta estruturada — nada é alterado automaticamente, você confirma manualmente nos
         cadastros de sócios/endereço/CNAE.
@@ -138,11 +150,11 @@
     currentProcess = process;
     document.getElementById("back-link").href = `company.html?id=${process.company_id}`;
     document.getElementById("process-panel").innerHTML = `
-      <h2>${escapeHtml(process.type)}</h2>
-      <p style="color: var(--text-muted); margin: 0 0 8px">
-        Status: <span class="badge status-${process.status}">${escapeHtml(process.status)}</span>
-      </p>
-      ${process.description ? `<p style="margin: 0">${escapeHtml(process.description)}</p>` : ""}`;
+      <div>
+        <div class="process-title">${escapeHtml(process.type)}</div>
+        <div class="process-sub">${process.description ? escapeHtml(process.description) : "Sem descrição informada"}</div>
+      </div>
+      <span class="badge status-${process.status}">${escapeHtml(process.status)}</span>`;
     renderJucepeHelp(process.type);
   }
 
@@ -156,12 +168,12 @@
     const rows = validations
       .map(
         (v) => `
-      <div class="panel result-row result-${v.result}" style="margin-bottom: 12px; padding: 16px">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px">
+      <div class="result-card r-${v.result}">
+        <div class="result-top">
           <span class="badge result-${v.result}">${RESULT_LABELS[v.result] || escapeHtml(v.result)}</span>
         </div>
-        <p style="margin: 0 0 4px">${escapeHtml(v.message)}</p>
-        ${v.suggested_action ? `<p style="margin: 0; color: var(--text-muted)">Ação sugerida: ${escapeHtml(v.suggested_action)}</p>` : ""}
+        <div class="result-msg">${escapeHtml(v.message)}</div>
+        ${v.suggested_action ? `<div class="result-action">Ação sugerida: ${escapeHtml(v.suggested_action)}</div>` : ""}
       </div>`
       )
       .join("");
@@ -186,10 +198,10 @@
           items
             .map(
               (item) => `
-          <div class="panel result-row ${toneClass}" style="margin-bottom: 10px; padding: 14px">
-            <p style="margin: 0 0 4px">${escapeHtml(item.message)}</p>
-            ${item.rule_codigo ? `<p style="margin: 0; font-size: 0.8rem; color: var(--text-muted)">Regra: ${escapeHtml(item.rule_codigo)}</p>` : ""}
-            ${item.suggested_action ? `<p style="margin: 4px 0 0; color: var(--text-muted)">Ação sugerida: ${escapeHtml(item.suggested_action)}</p>` : ""}
+          <div class="result-card ${toneClass}">
+            <div class="result-msg">${escapeHtml(item.message)}</div>
+            ${item.rule_codigo ? `<div class="result-action">Regra: ${escapeHtml(item.rule_codigo)}</div>` : ""}
+            ${item.suggested_action ? `<div class="result-action">Ação sugerida: ${escapeHtml(item.suggested_action)}</div>` : ""}
           </div>`
             )
             .join("")
@@ -296,13 +308,16 @@
       const rows = result.divergences.length
         ? result.divergences
             .map(
-              (d) => `<div class="notice" style="margin-bottom: 8px; ${d.divergente ? "border-color: var(--erro)" : ""}">
-                <strong>${escapeHtml(d.campo)}</strong> — cadastro: ${escapeHtml(d.cadastro)} · documento: ${escapeHtml(d.documento)}
-                ${d.divergente ? ' <span class="badge result-erro">Divergente</span>' : ' <span class="badge result-ok">OK</span>'}
+              (d) => `<div class="divergence-row">
+                <div>
+                  <div class="field-name">${escapeHtml(d.campo)}</div>
+                  <div class="vals">cadastro: ${escapeHtml(d.cadastro)} · documento: ${escapeHtml(d.documento)}</div>
+                </div>
+                ${d.divergente ? '<span class="badge result-erro">Divergente</span>' : '<span class="badge result-ok">OK</span>'}
               </div>`
             )
             .join("")
-        : '<p class="notice">Nenhum campo comparável foi extraído do texto.</p>';
+        : '<p class="panel-note">Nenhum campo comparável foi extraído do texto.</p>';
       resultEl.innerHTML = rows;
       await loadDocuments();
     } catch (err) {
@@ -326,8 +341,11 @@
         body: JSON.stringify({ process_id: processId, message }),
       });
       resultEl.innerHTML = `
-        <p class="notice">Proposta gerada pela IA — confirme e aplique manualmente nos cadastros:</p>
-        <pre style="background: var(--surface-alt); padding: 12px; border-radius: 8px; overflow-x: auto">${escapeHtml(JSON.stringify(result.proposal, null, 2))}</pre>`;
+        <div class="proposal-box">${escapeHtml(JSON.stringify(result.proposal, null, 2))}</div>
+        <div class="assistant-hint">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Proposta gerada pela IA — confirme e aplique manualmente nos cadastros.
+        </div>`;
     } catch (err) {
       errorEl.textContent = err.message || "Não foi possível interpretar a solicitação.";
     }
