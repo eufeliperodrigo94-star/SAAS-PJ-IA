@@ -74,6 +74,24 @@ Sirva o `frontend/` com qualquer servidor estático (ex.: `python -m http.server
 docker compose up --build
 ```
 
+## Deploy (Render + Vercel)
+
+**Backend (Render)** — `render.yaml` já descreve o serviço (Docker, `backend/Dockerfile`):
+
+1. Crie uma conta em [render.com](https://render.com) e conecte este repositório GitHub.
+2. "New +" → "Blueprint" → selecione o repositório; o Render lê `render.yaml` automaticamente.
+3. Preencha no dashboard (aba Environment) as variáveis marcadas `sync: false`:
+   `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`, `ANTHROPIC_API_KEY`
+   (os mesmos valores do seu `.env`).
+4. Após o deploy, o Render expõe uma URL pública (`https://<nome-do-serviço>.onrender.com`).
+
+**Frontend (Vercel)** — `vercel.json` serve a pasta `frontend/` como raiz do site:
+
+1. Atualize `frontend/assets/config.js` com a URL pública do backend no Render
+   (`API_BASE_URL`) e faça commit/push — o Vercel já está conectado a este repositório e
+   redeploya automaticamente a cada push.
+2. Atualize `CORS_ALLOW_ORIGINS` no Render (ou em `render.yaml`) com o domínio real do Vercel.
+
 ## Documentação
 
 Veja `docs/` para arquitetura, banco de dados, motor de regras e uso de IA.
